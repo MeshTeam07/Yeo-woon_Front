@@ -14,6 +14,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import './styles.css';
+import yeowoonLogo from './assets/main_icon_yeowoon.png';
 
 const STORAGE_KEY = 'yeowoon_records_v1';
 const LIKE_KEY = 'yeowoon_likes_v1';
@@ -221,6 +222,8 @@ function App() {
     if (!requireLogin()) return;
 
     const isLiked = likes.includes(id);
+    const amount = isLiked ? -1 : 1;
+
     const nextLikes = isLiked
       ? likes.filter((likeId) => likeId !== id)
       : [...likes, id];
@@ -229,13 +232,23 @@ function App() {
       item.id === id
         ? {
             ...item,
-            likes: Math.max(0, item.likes + (isLiked ? -1 : 1)),
+            likes: Math.max(0, item.likes + amount),
           }
         : item,
     );
 
     setLikes(nextLikes);
     setRecords(nextRecords);
+
+    setSelected((prev) =>
+      prev?.id === id
+        ? {
+            ...prev,
+            likes: Math.max(0, prev.likes + amount),
+          }
+        : prev,
+    );
+
     saveLikes(nextLikes);
     saveRecords(nextRecords);
   };
@@ -276,22 +289,28 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app ${page !== 'map' ? 'panelOpen' : ''}`}>
       <Sidebar
         page={page}
         setPage={setPage}
         isLoggedIn={isLoggedIn}
+        setAuth={setAuth}
         requireLogin={requireLogin}
       />
 
       <main className="mapArea">
-        <MapCanvas records={nearbyRecords} onSelect={setSelected} />
+        <MapCanvas
+          records={nearbyRecords}
+          likes={likes}
+          onLike={toggleLike}
+          onSelect={setSelected}
+        />
 
         <button
           className={`writeButton ${!isLoggedIn ? 'locked' : ''}`}
-          onClick={() => requireLogin() && setEditing({ songs: [{}, {}, {}] })}
+          onClick={() => requireLogin() && setEditing({ songs: [{}] })}
         >
-          {isLoggedIn ? <Plus size={22} /> : <Lock size={19} />}
+          {isLoggedIn ? <Plus size={26} /> : <Lock size={22} />}
           순간 남기기
         </button>
       </main>
@@ -319,14 +338,13 @@ function App() {
           myRecords={myRecords}
           likedRecords={likedRecords}
           likes={likes}
+          setPage={setPage}
           onLike={toggleLike}
           onSelect={setSelected}
           onEdit={setEditing}
           onDelete={deleteRecord}
         />
       )}
-
-      <AuthButton isLoggedIn={isLoggedIn} setAuth={setAuth} />
 
       {selected && (
         <DetailModal
@@ -350,14 +368,31 @@ function App() {
   );
 }
 
-function Sidebar({ page, setPage, isLoggedIn, requireLogin }) {
+function Sidebar({ page, setPage, isLoggedIn, setAuth, requireLogin }) {
+  const goHome = () => setPage('map');
+
+  const toggleNearby = () => {
+    setPage(page === 'nearby' ? 'map' : 'nearby');
+  };
+
+  const toggleMypage = () => {
+    if (!requireLogin()) return;
+    setPage(page === 'mypage' ? 'map' : 'mypage');
+  };
+
   return (
     <aside className="sidebar">
-      <h1>여운</h1>
+      <button className="brandHome" onClick={goHome} aria-label="홈으로 이동">
+        <img src={yeowoonLogo} alt="여운 대표 이미지" />
+        <h1>
+          <span>여</span>
+          <span>운</span>
+        </h1>
+      </button>
 
       <button
         className={page === 'nearby' ? 'active' : ''}
-        onClick={() => setPage('nearby')}
+        onClick={toggleNearby}
       >
         <Music2 />
         주변
@@ -365,11 +400,13 @@ function Sidebar({ page, setPage, isLoggedIn, requireLogin }) {
 
       <button
         className={page === 'mypage' ? 'active' : ''}
-        onClick={() => requireLogin() && setPage('mypage')}
+        onClick={toggleMypage}
       >
         {isLoggedIn ? <UserRound /> : <Lock />}
         마이페이지
       </button>
+
+      <AuthButton isLoggedIn={isLoggedIn} setAuth={setAuth} />
     </aside>
   );
 }
@@ -383,7 +420,7 @@ function AuthButton({ isLoggedIn, setAuth }) {
   );
 }
 
-function MapCanvas({ records, onSelect }) {
+function MapCanvas({ records, likes, onLike, onSelect }) {
   return (
     <section className="mapCanvas">
       <div className="radiusCircle">
@@ -394,16 +431,50 @@ function MapCanvas({ records, onSelect }) {
       <div className="road roadTwo" />
       <div className="myLocation" />
 
-      {records.slice(0, 5).map((record, index) => (
-        <button
-          key={record.id}
-          className={`mapPin pin${index + 1}`}
-          onClick={() => onSelect(record)}
-          title={record.message}
-        >
-          <Heart size={22} />
-        </button>
-      ))}
+      {records.slice(0, 5).map((record, index) => {
+        const song = record.songs?.[0];
+        const liked = likes.includes(record.id);
+
+        return (
+          <div key={record.id} className={`mapPinGroup pin${index + 1}`}>
+            <button
+              className={`mapPin ${liked ? 'liked' : ''}`}
+              onClick={() => onSelect(record)}
+              title={record.message}
+            >
+              <Heart
+                size={22}
+                fill={liked ? 'currentColor' : 'none'}
+                strokeWidth={liked ? 0 : 2.5}
+              />
+            </button>
+
+            <div className="mapMiniCard" onClick={() => onSelect(record)}>
+              <img src={song?.albumImage || record.image} alt="앨범 이미지" />
+
+              <div>
+                <strong>{song?.title || '노래 제목'}</strong>
+                <span>{song?.artist || record.author}</span>
+              </div>
+
+              <button
+                className={`miniHeart ${liked ? 'liked' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onLike(record.id);
+                }}
+                aria-label="좋아요"
+              >
+                <Heart
+                  size={15}
+                  fill={liked ? 'currentColor' : 'none'}
+                  strokeWidth={liked ? 0 : 2.4}
+                />
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }
@@ -510,7 +581,11 @@ function RecordCard({
               onLike(record.id);
             }}
           >
-            <Heart size={18} />
+            <Heart
+              size={18}
+              fill={liked ? 'currentColor' : 'none'}
+              strokeWidth={liked ? 0 : 2.4}
+            />
             {record.likes}
           </button>
         </div>
@@ -535,6 +610,7 @@ function MyPage({
   myRecords,
   likedRecords,
   likes,
+  setPage,
   onLike,
   onSelect,
   onEdit,
@@ -547,7 +623,7 @@ function MyPage({
     <Panel
       title="마이페이지"
       subtitle="내 기록을 모아보는 공간"
-      onClose={() => {}}
+      onClose={() => setPage('map')}
     >
       <div className="tabs wide">
         <button
@@ -603,7 +679,7 @@ function DetailModal({ record, liked, onClose, onLike }) {
           <p className="message">{record.message}</p>
 
           <div className="songList">
-            {record.songs.map((song, index) => (
+            {record.songs.slice(0, 1).map((song, index) => (
               <div className="song" key={`${song.title}-${index}`}>
                 <img src={song.albumImage} alt="앨범" />
 
@@ -623,7 +699,10 @@ function DetailModal({ record, liked, onClose, onLike }) {
             className={liked ? 'likeLarge liked' : 'likeLarge'}
             onClick={onLike}
           >
-            <Heart />
+            <Heart
+              fill={liked ? 'currentColor' : 'none'}
+              strokeWidth={liked ? 0 : 2.4}
+            />
             좋아요 {record.likes}
           </button>
         </div>
@@ -644,52 +723,68 @@ function EditorModal({ initial, onClose, onSubmit }) {
     createdAt: initial.createdAt,
     likes: initial.likes,
     score: initial.score,
-    songs: [0, 1, 2].map(
-      (i) =>
-        initial.songs?.[i] || {
-          title: '',
-          artist: '',
-          albumImage: '',
-          previewUrl: '',
-        },
-    ),
+    songs: [
+      initial.songs?.[0] || {
+        title: '',
+        artist: '',
+        albumImage: '',
+        previewUrl: '',
+      },
+    ],
   });
 
-  const updateSong = (index, field, value) => {
-    const songs = form.songs.map((song, i) =>
-      i === index ? { ...song, [field]: value } : song,
-    );
+  const updateSong = (field, value) => {
+    const nextSong = {
+      ...form.songs[0],
+      [field]: value,
+    };
 
-    setForm({ ...form, songs });
+    setForm({
+      ...form,
+      songs: [nextSong],
+    });
+  };
+
+  const handleImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const imageUrl = URL.createObjectURL(file);
+
+    setForm({
+      ...form,
+      image: imageUrl,
+    });
   };
 
   const submit = (e) => {
     e.preventDefault();
 
+    const song = form.songs[0];
+
     const valid =
       form.address.trim() &&
       form.message.trim() &&
-      form.songs.every((song) => song.title.trim() && song.artist.trim());
+      song.title.trim() &&
+      song.artist.trim();
 
     if (!valid) {
-      alert('주소, 문구, 노래 3개는 필수예요.');
+      alert('주소, 문구, 노래 1개는 필수예요.');
       return;
     }
 
-    const fallbackIds = [
-      '1511379938547-c1f69419868d',
-      '1493225457124-a3eb161ffa5f',
-      '1470225620780-dba8ba36b745',
-    ];
+    const fallbackAlbumImage =
+      'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=600&q=80';
 
-    const withFallbackImages = form.songs.map((song, i) => ({
+    const nextSong = {
       ...song,
-      albumImage:
-        song.albumImage ||
-        `https://images.unsplash.com/photo-${fallbackIds[i]}?auto=format&fit=crop&w=600&q=80`,
-    }));
+      albumImage: song.albumImage || fallbackAlbumImage,
+    };
 
-    onSubmit({ ...form, songs: withFallbackImages });
+    onSubmit({
+      ...form,
+      songs: [nextSong],
+    });
   };
 
   return (
@@ -715,35 +810,52 @@ function EditorModal({ initial, onClose, onSubmit }) {
           placeholder="이 장소에 남기고 싶은 문장을 적어주세요."
         />
 
-        <label>이미지 URL 선택</label>
-        <input
-          value={form.image}
-          onChange={(e) => setForm({ ...form, image: e.target.value })}
-          placeholder="사진이 있으면 카드 대표 이미지가 돼요."
-        />
-
-        <label>함께 남길 노래 3개 *</label>
-        {form.songs.map((song, index) => (
-          <div className="songInputs" key={index}>
+        <label>대표 이미지 선택</label>
+        <div className="uploadButtons">
+          <label className="uploadChoice">
+            카메라로 촬영
             <input
-              value={song.title}
-              onChange={(e) => updateSong(index, 'title', e.target.value)}
-              placeholder={`노래 ${index + 1} 제목`}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageFile}
             />
+          </label>
 
-            <input
-              value={song.artist}
-              onChange={(e) => updateSong(index, 'artist', e.target.value)}
-              placeholder="가수"
-            />
+          <label className="uploadChoice">
+            앨범/드라이브 선택
+            <input type="file" accept="image/*" onChange={handleImageFile} />
+          </label>
+        </div>
 
-            <input
-              value={song.albumImage}
-              onChange={(e) => updateSong(index, 'albumImage', e.target.value)}
-              placeholder="앨범 사진 URL 선택"
-            />
-          </div>
-        ))}
+        {form.image && (
+          <img
+            className="imagePreview"
+            src={form.image}
+            alt="선택한 대표 이미지"
+          />
+        )}
+
+        <label>함께 남길 노래 1개 *</label>
+        <div className="songInputs">
+          <input
+            value={form.songs[0].title}
+            onChange={(e) => updateSong('title', e.target.value)}
+            placeholder="노래 제목"
+          />
+
+          <input
+            value={form.songs[0].artist}
+            onChange={(e) => updateSong('artist', e.target.value)}
+            placeholder="가수"
+          />
+
+          <input
+            value={form.songs[0].albumImage}
+            onChange={(e) => updateSong('albumImage', e.target.value)}
+            placeholder="앨범 사진 URL 선택"
+          />
+        </div>
 
         <button className="submitButton" type="submit">
           저장하기

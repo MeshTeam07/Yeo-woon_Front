@@ -8,11 +8,14 @@
   --map-fill: #dcd6ea;
   --map-border: #bdb6d8;
 
-  --offwhite: #f8f7f4;
-  --navy: #22243a;
-  --gray: #eef0f5;
-  --line: #d9dce7;
+  --offwhite: #f8f5ff;
+  --navy: #25213b;
+  --gray: #eee9f8;
+  --line: #cfc6e7;
   --white: #ffffff;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-purple: rgba(145, 127, 196, 0.13);
+  --shadow-purple: rgba(136, 119, 188, 0.24);
 
   font-family:
     'Pretendard',
@@ -29,7 +32,18 @@
 
 body {
   margin: 0;
-  background: var(--offwhite);
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(254, 135, 132, 0.22),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(145, 127, 196, 0.26),
+      transparent 34%
+    ),
+    linear-gradient(135deg, #fbf8ff 0%, #f0ebff 100%);
   color: var(--navy);
 }
 
@@ -52,12 +66,15 @@ button {
   overflow: hidden;
 }
 
+/* =========================
+   Sidebar
+   ========================= */
 .sidebar {
   width: 132px;
   min-width: 132px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.82);
-  border-right: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  border-right: 1px solid rgba(189, 182, 216, 0.7);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,13 +83,47 @@ button {
   z-index: 5;
 }
 
-.sidebar h1 {
-  font-size: 29px;
-  margin: 0 0 20px;
-  letter-spacing: -2px;
+.brandHome {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 0;
+  color: var(--lavender-dark);
+  background: transparent;
 }
 
-.sidebar button {
+.brandHome img {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  border-radius: 24px;
+  padding: 8px;
+  background: rgba(220, 214, 234, 0.28);
+  border: 1px solid rgba(189, 182, 216, 0.5);
+  box-shadow: 0 14px 28px rgba(136, 119, 188, 0.14);
+  transition: transform 0.2s ease;
+}
+
+.brandHome h1 {
+  width: 74px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -px 0 0;
+  font-size: 29px;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--lavender-dark);
+  font-weight: 900;
+}
+
+.brandHome:hover img {
+  transform: translateY(-2px);
+}
+
+.sidebar > button:not(.brandHome) {
   width: 100%;
   border-radius: 22px;
   padding: 16px 8px;
@@ -80,6 +131,11 @@ button {
   gap: 7px;
   place-items: center;
   color: #62657a;
+  background: transparent;
+  border: 0;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .sidebar button svg {
@@ -87,12 +143,27 @@ button {
   height: 28px;
 }
 
-.sidebar button.active {
-  background: rgba(220, 214, 234, 0.95);
-  color: var(--navy);
-  font-weight: 800;
+.sidebar > button:not(.brandHome):hover {
+  color: var(--lavender-dark);
+  transform: translateY(-2px);
+  background: transparent;
+  box-shadow: none;
 }
 
+.sidebar button.active {
+  background: transparent;
+  color: var(--lavender-dark);
+  font-weight: 900;
+  box-shadow: none;
+}
+
+.sidebar button.active svg {
+  color: var(--coral);
+}
+
+/* =========================
+   Map
+   ========================= */
 .mapArea {
   position: relative;
   flex: 1;
@@ -102,7 +173,18 @@ button {
 .mapCanvas {
   position: absolute;
   inset: 0;
-  background: linear-gradient(145deg, #fff, #fbfbff);
+  background:
+    radial-gradient(
+      circle at 58% 38%,
+      rgba(254, 135, 132, 0.16),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 35% 70%,
+      rgba(145, 127, 196, 0.2),
+      transparent 30%
+    ),
+    linear-gradient(145deg, #fffaff, #eee9fb 58%, #f8f5ff);
   overflow: hidden;
 }
 
@@ -128,8 +210,9 @@ button {
 
 .road {
   position: absolute;
-  background: #e9eaf1;
-  border: 1px solid #c9ccd8;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(189, 182, 216, 0.9);
+  box-shadow: 0 6px 18px rgba(145, 127, 196, 0.12);
 }
 
 .roadOne {
@@ -164,10 +247,10 @@ button {
   position: absolute;
   border-radius: 18px;
   padding: 11px 16px;
-  background: white;
-  border: 1px solid var(--map-border);
-  box-shadow: 0 10px 24px rgba(34, 36, 58, 0.14);
-  color: var(--lavender);
+  background: linear-gradient(135deg, var(--lavender), var(--lavender-dark));
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 14px 30px rgba(136, 119, 188, 0.34);
+  color: white;
 }
 
 .pin1 {
@@ -195,6 +278,9 @@ button {
   top: 77%;
 }
 
+/* =========================
+   Main buttons
+   ========================= */
 .writeButton {
   position: absolute;
   left: 50%;
@@ -206,17 +292,36 @@ button {
   padding: 20px 42px;
   border-radius: 26px;
   background: white;
-  border: 1px solid var(--line);
-  box-shadow: 0 20px 50px rgba(34, 36, 58, 0.18);
-  font-weight: 900;
-}
-.writeButton:hover {
+  border: 1px solid rgba(145, 127, 196, 0.42);
+  box-shadow: 0 20px 50px rgba(136, 119, 188, 0.22);
   color: var(--lavender-dark);
-  border-color: var(--lavender-light);
+  font-weight: 900;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.writeButton:hover {
+  transform: translateX(-50%) translateY(-8px);
+  background: white;
+  color: var(--coral);
+  border-color: var(--coral);
+  box-shadow: 0 28px 64px rgba(254, 135, 132, 0.48);
 }
 
 .writeButton.locked {
-  color: #8d91a5;
+  background: white;
+  color: var(--lavender-dark);
+  border-color: rgba(189, 182, 216, 0.85);
+  box-shadow: 0 16px 36px rgba(136, 119, 188, 0.18);
+}
+
+.writeButton.locked:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+  box-shadow: 0 28px 64px rgba(254, 135, 132, 0.42);
 }
 
 .authButton {
@@ -227,13 +332,16 @@ button {
   display: flex;
   gap: 8px;
   align-items: center;
-  background: var(--navy);
+  background: var(--lavender-dark);
   color: white;
   border-radius: 999px;
   padding: 12px 18px;
   box-shadow: 0 10px 28px rgba(34, 36, 58, 0.22);
 }
 
+/* =========================
+   Panel
+   ========================= */
 .panel {
   position: fixed;
   left: 132px;
@@ -241,9 +349,9 @@ button {
   bottom: 0;
   width: 390px;
   padding: 30px 18px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid rgba(189, 182, 216, 0.7);
   overflow-y: auto;
   z-index: 4;
 }
@@ -270,11 +378,14 @@ button {
   background: var(--gray);
 }
 
+/* =========================
+   Tabs
+   ========================= */
 .tabs {
   display: flex;
   gap: 8px;
   padding: 8px;
-  background: var(--gray);
+  background: rgba(220, 214, 234, 0.78);
   border-radius: 20px;
   margin: 14px 0;
 }
@@ -288,9 +399,9 @@ button {
 }
 
 .tabs button.selected {
-  background: white;
-  color: var(--navy);
-  box-shadow: 0 5px 12px rgba(34, 36, 58, 0.08);
+  background: linear-gradient(135deg, var(--lavender-dark), var(--lavender));
+  color: white;
+  box-shadow: 0 8px 18px rgba(136, 119, 188, 0.22);
 }
 
 .countText {
@@ -299,6 +410,9 @@ button {
   margin-bottom: 12px;
 }
 
+/* =========================
+   Record cards
+   ========================= */
 .recordList {
   display: grid;
   gap: 14px;
@@ -310,11 +424,11 @@ button {
   display: grid;
   grid-template-columns: 112px 1fr;
   gap: 14px;
-  background: white;
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(189, 182, 216, 0.78);
   border-radius: 24px;
   padding: 12px;
-  box-shadow: 0 10px 24px rgba(34, 36, 58, 0.07);
+  box-shadow: 0 12px 26px rgba(136, 119, 188, 0.13);
 }
 
 .recordCard > img {
@@ -400,6 +514,9 @@ button {
   border-radius: 22px;
 }
 
+/* =========================
+   Modal
+   ========================= */
 .modalBackdrop {
   position: fixed;
   inset: 0;
@@ -472,6 +589,9 @@ button {
   color: #4f5368;
 }
 
+/* =========================
+   Song
+   ========================= */
 .songList {
   display: grid;
   gap: 10px;
@@ -521,6 +641,22 @@ button {
   font-weight: 900;
 }
 
+.closePanel,
+.modalClose,
+.song button,
+.likeLarge {
+  color: var(--lavender-dark);
+  border-color: rgba(189, 182, 216, 0.78);
+}
+
+.likeLarge.liked {
+  border-color: rgba(254, 135, 132, 0.42);
+  background: rgba(254, 135, 132, 0.08);
+}
+
+/* =========================
+   Editor
+   ========================= */
 .editorModal {
   padding: 34px;
   width: min(760px, 92vw);
@@ -547,9 +683,61 @@ button {
   background: #fff;
 }
 
+.editorModal input:focus,
+.editorModal textarea:focus {
+  border-color: var(--lavender);
+  box-shadow: 0 0 0 4px rgba(145, 127, 196, 0.12);
+}
+
 .editorModal textarea {
   min-height: 120px;
   resize: vertical;
+}
+
+.uploadButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.uploadChoice {
+  display: grid !important;
+  place-items: center;
+  min-height: 54px;
+  margin: 0 !important;
+  padding: 14px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(145, 127, 196, 0.35);
+  background: rgba(220, 214, 234, 0.32);
+  color: var(--lavender-dark);
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.uploadChoice:hover {
+  transform: none;
+  border-color: var(--coral);
+  background: rgba(254, 135, 132, 0.08);
+}
+
+.uploadChoice input {
+  display: none;
+}
+
+.imagePreview {
+  width: 100%;
+  max-height: 220px;
+  margin-top: 12px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid rgba(189, 182, 216, 0.78);
+  box-shadow: 0 12px 24px rgba(136, 119, 188, 0.14);
 }
 
 .songInputs {
@@ -568,9 +756,10 @@ button {
   margin-top: 24px;
   padding: 17px;
   border-radius: 18px;
-  background: var(--lavender-dark);
+  background: linear-gradient(135deg, var(--lavender-dark), var(--lavender));
   color: white;
   font-weight: 900;
+  box-shadow: 0 14px 24px rgba(136, 119, 188, 0.26);
 }
 
 .toast {
@@ -579,20 +768,29 @@ button {
   bottom: 28px;
   transform: translateX(-50%);
   z-index: 30;
-  background: var(--navy);
+  background: var(--lavender-dark);
   color: white;
   padding: 13px 20px;
   border-radius: 999px;
   box-shadow: 0 10px 28px rgba(34, 36, 58, 0.24);
 }
 
+/* =========================
+   Tablet
+   ========================= */
 @media (max-width: 900px) {
   .sidebar {
     width: 92px;
     min-width: 92px;
   }
 
-  .sidebar h1 {
+  .brandHome img {
+    width: 58px;
+    height: 58px;
+    border-radius: 20px;
+  }
+
+  .brandHome h1 {
     font-size: 22px;
   }
 
@@ -650,22 +848,22 @@ button {
     height: 72px;
     padding: 10px;
     border-right: 0;
-    border: 1px solid var(--line);
+    border: 1px solid rgba(189, 182, 216, 0.7);
     border-radius: 28px;
     flex-direction: row;
     justify-content: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(18px);
-    box-shadow: 0 14px 40px rgba(34, 36, 58, 0.14);
+    box-shadow: 0 14px 40px rgba(136, 119, 188, 0.18);
     z-index: 18;
   }
 
-  .sidebar h1 {
+  .brandHome {
     display: none;
   }
 
-  .sidebar button {
+  .sidebar > button:not(.brandHome) {
     height: 52px;
     max-width: 148px;
     padding: 8px 12px;
@@ -674,6 +872,8 @@ button {
     gap: 6px;
     font-size: 13px;
     font-weight: 800;
+    background: transparent;
+    border: 0;
   }
 
   .sidebar button svg {
@@ -903,6 +1103,10 @@ button {
     margin-top: 14px;
   }
 
+  .uploadButtons {
+    grid-template-columns: 1fr;
+  }
+
   .songInputs {
     grid-template-columns: 1fr;
   }
@@ -916,4 +1120,356 @@ button {
     max-width: calc(100vw - 32px);
     text-align: center;
   }
+}
+
+/* =========================
+   Requested refinements
+   ========================= */
+
+/* 사이드바는 흰색, 버튼 박스 느낌 제거 */
+.sidebar {
+  background: rgba(255, 255, 255, 0.97);
+  border-right: 1px solid rgba(189, 182, 216, 0.7);
+  box-shadow: 8px 0 30px rgba(136, 119, 188, 0.08);
+}
+
+.brandHome {
+  color: var(--lavender-dark);
+}
+
+.brandHome img {
+  background: rgba(220, 214, 234, 0.28);
+  border: 1px solid rgba(189, 182, 216, 0.55);
+  box-shadow: 0 14px 28px rgba(136, 119, 188, 0.14);
+}
+
+.brandHome h1 {
+  color: var(--lavender-dark);
+}
+
+.sidebar > button:not(.brandHome):not(.authButton) {
+  color: #62657a;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton):hover {
+  color: var(--lavender-dark);
+  background: transparent;
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton).active {
+  color: var(--lavender-dark);
+  background: transparent;
+  box-shadow: none;
+  font-weight: 900;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton).active svg {
+  color: var(--coral);
+}
+
+/* 임시 로그인 버튼을 사이드바 하단으로 */
+.authButton {
+  position: static;
+  margin-top: auto;
+  width: 100%;
+  justify-content: center;
+  padding: 12px 8px;
+  border-radius: 20px;
+  background: var(--lavender-dark);
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(136, 119, 188, 0.24);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.authButton:hover {
+  transform: translateY(-2px);
+  background: #7664ad;
+  box-shadow: 0 16px 30px rgba(136, 119, 188, 0.32);
+}
+
+/* 순간 남기기 버튼: 더 크게, 기본 진한 보라 + 흰 글씨 */
+.writeButton {
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  padding: 24px 58px;
+  min-width: 230px;
+  min-height: 74px;
+  border-radius: 32px;
+  background: #7664ad;
+  color: white;
+  border: 1px solid rgba(118, 100, 173, 0.95);
+  font-size: 19px;
+  font-weight: 950;
+  letter-spacing: -0.3px;
+  box-shadow: 0 22px 54px rgba(118, 100, 173, 0.38);
+  transition:
+    transform 0.24s ease,
+    box-shadow 0.24s ease,
+    background 0.24s ease,
+    color 0.24s ease,
+    border-color 0.24s ease;
+}
+
+/* 사이드바 패널 열리면 남은 지도 영역의 중앙으로 이동 */
+.app.panelOpen .writeButton {
+  left: calc(50% + 195px);
+}
+
+/* 호버 시 흰 버튼 + 주황/코랄 글씨 + 주황 그림자 */
+.writeButton:hover {
+  transform: translateX(-50%) translateY(-9px);
+  background: white;
+  color: var(--coral);
+  border-color: rgba(254, 135, 132, 0.85);
+  box-shadow: 0 30px 72px rgba(254, 135, 132, 0.5);
+}
+
+.writeButton.locked {
+  background: #7664ad;
+  color: white;
+  border-color: rgba(118, 100, 173, 0.95);
+  box-shadow: 0 22px 54px rgba(118, 100, 173, 0.32);
+}
+
+.writeButton.locked:hover {
+  background: white;
+  color: var(--coral);
+  border-color: rgba(254, 135, 132, 0.85);
+  box-shadow: 0 30px 72px rgba(254, 135, 132, 0.44);
+}
+
+/* 지도 핀 그룹 */
+.mapPinGroup {
+  position: absolute;
+  z-index: 2;
+}
+
+.mapPinGroup.pin1 {
+  left: 53%;
+  top: 24%;
+}
+
+.mapPinGroup.pin2 {
+  left: 65%;
+  top: 37%;
+}
+
+.mapPinGroup.pin3 {
+  left: 19%;
+  top: 20%;
+}
+
+.mapPinGroup.pin4 {
+  left: 15%;
+  top: 70%;
+}
+
+.mapPinGroup.pin5 {
+  left: 35%;
+  top: 77%;
+}
+
+/* 기존 pin 위치 클래스가 버튼에 남아있지 않도록, 버튼 자체는 그룹 안에서만 배치 */
+.mapPin {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--lavender), var(--lavender-dark));
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 14px 30px rgba(136, 119, 188, 0.34);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+.mapPinGroup:hover .mapPin {
+  transform: translateY(-8px) scale(1.05);
+  background: white;
+  color: var(--coral);
+  border-color: rgba(254, 135, 132, 0.65);
+  box-shadow: 0 22px 46px rgba(254, 135, 132, 0.36);
+}
+
+.mapPin.liked {
+  background: linear-gradient(135deg, var(--coral), #ff9c99);
+  color: white;
+}
+
+/* 지도 핀 호버 시 나오는 작은 카드 */
+.mapMiniCard {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(8px);
+  width: 190px;
+  display: grid;
+  grid-template-columns: 46px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(189, 182, 216, 0.72);
+  box-shadow: 0 18px 40px rgba(34, 36, 58, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mapPinGroup:hover .mapMiniCard {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mapMiniCard img {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--gray);
+}
+
+.mapMiniCard strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mapMiniCard span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #7b7890;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.miniHeart {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(220, 214, 234, 0.45);
+  color: var(--lavender-dark);
+}
+
+.miniHeart.liked {
+  background: rgba(254, 135, 132, 0.14);
+  color: var(--coral);
+}
+
+/* 좋아요 하트 채움 공통 */
+.heart.liked,
+.likeLarge.liked {
+  color: var(--coral) !important;
+}
+
+.heart.liked svg,
+.likeLarge.liked svg,
+.mapPin.liked svg,
+.miniHeart.liked svg {
+  fill: currentColor;
+}
+
+/* 사이드바 패널 안 카드 호버 색 변경 */
+.recordCard {
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.recordCard:hover {
+  transform: none;
+  background: rgba(248, 245, 255, 0.98);
+  border-color: rgba(254, 135, 132, 0.46);
+  box-shadow: 0 18px 38px rgba(254, 135, 132, 0.16);
+}
+
+.recordCard:hover h3 {
+  color: var(--lavender-dark);
+}
+
+.recordCard:hover .meta {
+  color: var(--coral);
+}
+
+/* 모바일에서는 패널이 아래에서 올라오니까 버튼 중앙 이동 해제 */
+@media (max-width: 640px) {
+  .app.panelOpen .writeButton {
+    left: 50%;
+  }
+
+  .writeButton {
+    min-width: 0;
+    min-height: 62px;
+    padding: 17px 24px;
+    font-size: 16px;
+  }
+
+  .authButton {
+    position: absolute;
+    top: -58px;
+    right: 0;
+    width: auto;
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+
+  .mapMiniCard {
+    width: 172px;
+    grid-template-columns: 40px 1fr 26px;
+  }
+
+  .mapMiniCard img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mapPin {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* 사이드바 버튼 배경만 변경 */
+.sidebar > button:not(.brandHome):not(.authButton) {
+  background: white;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton).active {
+  background: rgba(220, 214, 234, 0.78);
 }
