@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { searchSongs } from '../../api/songs';
 import './Modal.css';
 
-function EditorModal({ initial, onClose, onSubmit }) {
+function EditorModal({ initial, position, onClose, onSubmit }) {
   const [form, setForm] = useState({
     id: initial.id,
     owner: initial.owner,
@@ -20,62 +21,74 @@ function EditorModal({ initial, onClose, onSubmit }) {
         artist: '',
         albumImage: '',
         previewUrl: '',
+        externalTrackId: '',
+        musicUrl: '',
       },
     ],
   });
 
-  const updateSong = (field, value) => {
-    const nextSong = {
-      ...form.songs[0],
-      [field]: value,
-    };
+  const [songQuery, setSongQuery] = useState(form.songs[0]?.title || '');
+  const [songResults, setSongResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef(null);
 
-    setForm({
-      ...form,
-      songs: [nextSong],
-    });
+  useEffect(() => {
+    if (!songQuery.trim()) {
+      setSongResults([]);
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await searchSongs({ keyword: songQuery });
+        const list = Array.isArray(res)
+          ? res
+          : (res?.songs ?? res?.results ?? []);
+        setSongResults(list.slice(0, 8));
+      } catch {
+        setSongResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 500);
+    return () => clearTimeout(debounceRef.current);
+  }, [songQuery]);
+
+  const selectSong = (song) => {
+    const mapped = {
+      title: song.title ?? song.trackName ?? '',
+      artist: song.artist ?? song.artistName ?? '',
+      albumImage:
+        song.albumCoverUrl ?? song.albumImage ?? song.artworkUrl100 ?? '',
+      previewUrl: song.previewUrl ?? '',
+      externalTrackId: song.externalTrackId ?? String(song.trackId ?? ''),
+      musicUrl: song.musicUrl ?? song.previewUrl ?? '',
+    };
+    setForm((prev) => ({ ...prev, songs: [mapped] }));
+    setSongQuery(mapped.title);
+    setSongResults([]);
   };
 
   const handleImageFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const imageUrl = URL.createObjectURL(file);
-
-    setForm({
-      ...form,
-      image: imageUrl,
-    });
+    setForm((prev) => ({ ...prev, image: URL.createObjectURL(file) }));
   };
 
   const submit = (e) => {
     e.preventDefault();
-
     const song = form.songs[0];
-
-    const valid =
-      form.address.trim() &&
-      form.message.trim() &&
-      song.title.trim() &&
-      song.artist.trim();
-
-    if (!valid) {
+    if (
+      !form.address.trim() ||
+      !form.message.trim() ||
+      !song.title.trim() ||
+      !song.artist.trim()
+    ) {
       alert('주소, 문구, 노래 1개는 필수예요.');
       return;
     }
-
-    const fallbackAlbumImage =
-      'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=600&q=80';
-
-    const nextSong = {
-      ...song,
-      albumImage: song.albumImage || fallbackAlbumImage,
-    };
-
-    onSubmit({
-      ...form,
-      songs: [nextSong],
-    });
+    onSubmit({ ...form, songs: [song] });
   };
 
   return (
@@ -87,17 +100,19 @@ function EditorModal({ initial, onClose, onSubmit }) {
 
         <h2>{form.id ? '여운 수정하기' : '순간 남기기'}</h2>
 
-        <label>주소 *</label>
+        <label>주소</label>
         <input
           value={form.address}
-          onChange={(e) => setForm({ ...form, address: e.target.value })}
-          placeholder="예: 서울 동작구 상도1동"
+          readOnly
+          style={{ background: '#f5f4f9', color: '#777', cursor: 'default' }}
         />
 
         <label>문구 *</label>
         <textarea
           value={form.message}
-          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, message: e.target.value }))
+          }
           placeholder="이 장소에 남기고 싶은 문장을 적어주세요."
         />
 
@@ -112,13 +127,11 @@ function EditorModal({ initial, onClose, onSubmit }) {
               onChange={handleImageFile}
             />
           </label>
-
           <label className="uploadChoice">
             앨범/드라이브 선택
             <input type="file" accept="image/*" onChange={handleImageFile} />
           </label>
         </div>
-
         {form.image && (
           <img
             className="imagePreview"
@@ -128,25 +141,49 @@ function EditorModal({ initial, onClose, onSubmit }) {
         )}
 
         <label>함께 남길 노래 1개 *</label>
-        <div className="songInputs">
+        <div className="songSearch">
           <input
-            value={form.songs[0].title}
-            onChange={(e) => updateSong('title', e.target.value)}
-            placeholder="노래 제목"
+            value={songQuery}
+            onChange={(e) => setSongQuery(e.target.value)}
+            placeholder="노래 제목 또는 가수 검색"
           />
-
-          <input
-            value={form.songs[0].artist}
-            onChange={(e) => updateSong('artist', e.target.value)}
-            placeholder="가수"
-          />
-
-          <input
-            value={form.songs[0].albumImage}
-            onChange={(e) => updateSong('albumImage', e.target.value)}
-            placeholder="앨범 사진 URL 선택"
-          />
+          {searching && <div className="songSearchHint">검색 중...</div>}
+          {songResults.length > 0 && (
+            <ul className="songResults">
+              {songResults.map((song, i) => {
+                const title = song.title ?? song.trackName ?? '';
+                const artist = song.artist ?? song.artistName ?? '';
+                const thumb =
+                  song.albumCoverUrl ??
+                  song.albumImage ??
+                  song.artworkUrl100 ??
+                  '';
+                return (
+                  <li
+                    key={song.externalTrackId ?? song.trackId ?? i}
+                    onClick={() => selectSong(song)}
+                  >
+                    {thumb && <img src={thumb} alt="" />}
+                    <span className="songResultTitle">{title}</span>
+                    <span className="songResultArtist">{artist}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
+
+        {form.songs[0].title && (
+          <div className="selectedSong">
+            {form.songs[0].albumImage && (
+              <img src={form.songs[0].albumImage} alt="앨범" />
+            )}
+            <div>
+              <strong>{form.songs[0].title}</strong>
+              <span>{form.songs[0].artist}</span>
+            </div>
+          </div>
+        )}
 
         <button className="submitButton" type="submit">
           저장하기

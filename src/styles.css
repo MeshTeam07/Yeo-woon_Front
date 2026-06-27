@@ -24,6 +24,7 @@
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
+  --sidebar-width: 132px;
 }
 
 * {
@@ -33,8 +34,16 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 12% 12%, rgba(254, 135, 132, 0.22), transparent 28%),
-    radial-gradient(circle at 78% 18%, rgba(145, 127, 196, 0.26), transparent 34%),
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(254, 135, 132, 0.22),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(145, 127, 196, 0.26),
+      transparent 34%
+    ),
     linear-gradient(135deg, #fbf8ff 0%, #f0ebff 100%);
   color: var(--navy);
 }

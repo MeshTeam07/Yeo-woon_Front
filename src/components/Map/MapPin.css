@@ -1,47 +1,88 @@
 .mapPinGroup {
-  position: absolute;
-  z-index: 2;
+  position: relative;
+  z-index: 9999;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
 }
-
-.mapPinGroup.pin1 { left: 53%; top: 24%; }
-.mapPinGroup.pin2 { left: 65%; top: 37%; }
-.mapPinGroup.pin3 { left: 19%; top: 20%; }
-.mapPinGroup.pin4 { left: 15%; top: 70%; }
-.mapPinGroup.pin5 { left: 35%; top: 77%; }
-
 .mapPin {
   position: relative;
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
   padding: 0;
+  z-index: 10000;
+
   display: grid;
   place-items: center;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--lavender), var(--lavender-dark));
+
+  border: none;
+  background: transparent;
+  cursor: pointer;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 14px 30px rgba(136, 119, 188, 0.34);
+
+  filter: drop-shadow(0 14px 22px rgba(136, 119, 188, 0.34));
+
   transition:
     transform 0.22s ease,
-    box-shadow 0.22s ease,
-    background 0.22s ease;
+    filter 0.22s ease;
+}
+
+.mapPinFallback {
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50% 50% 50% 12px;
+  background: linear-gradient(135deg, #917fc4, #8877bc);
+  transform: translateX(-50%) rotate(-45deg);
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.32);
+}
+
+.mapPinImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transform: translateY(6px);
+
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.mapPinHeart {
+  position: relative;
+  z-index: 2;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(80, 65, 130, 0.35));
+
+  transition:
+    transform 0.22s ease,
+    color 0.22s ease;
+}
+
+.mapPin.liked .mapPinHeart {
+  color: var(--coral);
+}
+
+.mapPin.liked .mapPinImage {
+  filter: saturate(1.12) brightness(1.03);
 }
 
 .mapPinGroup:hover .mapPin {
-  transform: translateY(-8px) scale(1.05);
-  background: white;
+  transform: translateY(-8px) scale(1.06);
+}
+
+.mapPinGroup:hover .mapPinImage {
+  transform: translateY(6px) scale(1.04);
+  filter: brightness(1.06) saturate(1.08);
+}
+
+.mapPinGroup:hover .mapPinHeart {
   color: var(--coral);
-  border-color: rgba(254, 135, 132, 0.65);
-  box-shadow: 0 22px 46px rgba(254, 135, 132, 0.36);
-}
-
-.mapPin.liked {
-  background: linear-gradient(135deg, var(--coral), #ff9c99);
-  color: white;
-}
-
-.mapPin.liked svg {
-  fill: currentColor;
 }
 
 .mapMiniCard {
@@ -106,8 +147,10 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
+  border: none;
   background: rgba(220, 214, 234, 0.45);
   color: var(--lavender-dark);
+  cursor: pointer;
 }
 
 .miniHeart.liked {
@@ -119,19 +162,10 @@
   fill: currentColor;
 }
 
-/* =========================
-   Mobile
-   ========================= */
 @media (max-width: 640px) {
-  .mapPinGroup.pin1 { left: 55%; top: 27%; }
-  .mapPinGroup.pin2 { left: 70%; top: 39%; }
-  .mapPinGroup.pin3 { left: 14%; top: 24%; }
-  .mapPinGroup.pin4 { left: 12%; top: 67%; }
-  .mapPinGroup.pin5 { left: 40%; top: 74%; }
-
   .mapPin {
-    width: 48px;
-    height: 48px;
+    width: 58px;
+    height: 58px;
   }
 
   .mapMiniCard {

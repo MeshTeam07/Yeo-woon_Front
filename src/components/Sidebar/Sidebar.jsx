@@ -1,17 +1,8 @@
-import { Lock, LogIn, LogOut, Music2, UserRound } from 'lucide-react';
+import { Lock, LogIn, Music2, UserRound } from 'lucide-react';
 import yeowoonLogo from '../../assets/main_icon_yeowoon.png';
 import './Sidebar.css';
 
-function AuthButton({ isLoggedIn, setAuth }) {
-  return (
-    <button className="authButton" onClick={() => setAuth(!isLoggedIn)}>
-      {isLoggedIn ? <LogOut size={17} /> : <LogIn size={17} />}
-      {isLoggedIn ? '로그아웃' : '임시 로그인'}
-    </button>
-  );
-}
-
-function Sidebar({ page, setPage, isLoggedIn, setAuth, requireLogin }) {
+function Sidebar({ page, setPage, isLoggedIn, user, requireLogin }) {
   const goHome = () => setPage('map');
 
   const toggleNearby = () => {
@@ -21,6 +12,10 @@ function Sidebar({ page, setPage, isLoggedIn, setAuth, requireLogin }) {
   const toggleMypage = () => {
     if (!requireLogin()) return;
     setPage(page === 'mypage' ? 'map' : 'mypage');
+  };
+
+  const handleLogin = () => {
+    window.location.href = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google';
   };
 
   return (
@@ -49,7 +44,21 @@ function Sidebar({ page, setPage, isLoggedIn, setAuth, requireLogin }) {
         마이페이지
       </button>
 
-      <AuthButton isLoggedIn={isLoggedIn} setAuth={setAuth} />
+      {isLoggedIn ? (
+        <button className="authButton" onClick={toggleMypage}>
+          {user?.profileImageUrl ? (
+            <img src={user.profileImageUrl} alt="프로필" className="sidebarAvatar" />
+          ) : (
+            <UserRound size={17} />
+          )}
+          {user?.nickname || '내 정보'}
+        </button>
+      ) : (
+        <button className="authButton" onClick={handleLogin}>
+          <LogIn size={17} />
+          구글로 로그인
+        </button>
+      )}
     </aside>
   );
 }

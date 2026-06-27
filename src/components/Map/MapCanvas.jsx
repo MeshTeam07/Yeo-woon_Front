@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import './MapCanvas.css';
-
-const RADIUS_METER = 500;
+import MapPin from './MapPin';
+import { RADIUS_METER } from '../../constants';
+const MAX_LEVEL = 3;
 
 function loadKakaoMapScript() {
   return new Promise((resolve, reject) => {
@@ -24,7 +27,7 @@ function loadKakaoMapScript() {
     script.async = true;
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${
       import.meta.env.VITE_KAKAO_MAP_KEY
-    }&autoload=false`;
+    }&autoload=false&libraries=services`;
 
     script.onload = () => {
       window.kakao.maps.load(() => resolve(window.kakao));
@@ -52,15 +55,36 @@ function getDistanceMeter(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function MapCanvas() {
+function toNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+export default function MapCanvas({
+  records = [],
+  likes = [],
+  onLike,
+  onSelect,
+  onLocationReady,
+}) {
+  const onLocationReadyRef = useRef(onLocationReady);
+  useEffect(() => {
+    onLocationReadyRef.current = onLocationReady;
+  }, [onLocationReady]);
+
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
+  const kakaoRef = useRef(null);
   const centerRef = useRef(null);
   const isReturningRef = useRef(false);
   const toastTimerRef = useRef(null);
+  const markerRef = useRef(null);
+  const circleRef = useRef(null);
+  const overlayRefs = useRef([]);
 
   const [message, setMessage] = useState('현재 위치를 확인하는 중입니다...');
   const [toastMessage, setToastMessage] = useState('');
+  const [mapReady, setMapReady] = useState(false);
 
   const showToast = (text) => {
     setToastMessage(text);
@@ -75,12 +99,10 @@ export default function MapCanvas() {
   };
 
   useEffect(() => {
-    let marker = null;
-    let circle = null;
-
     const initMap = async () => {
       try {
         const kakao = await loadKakaoMapScript();
+        kakaoRef.current = kakao;
 
         if (!navigator.geolocation) {
           setMessage('이 브라우저에서는 현재 위치를 사용할 수 없습니다.');
@@ -93,6 +115,7 @@ export default function MapCanvas() {
             const lng = position.coords.longitude;
 
             const currentLatLng = new kakao.maps.LatLng(lat, lng);
+
             centerRef.current = {
               lat,
               lng,
@@ -101,18 +124,18 @@ export default function MapCanvas() {
 
             const map = new kakao.maps.Map(mapContainerRef.current, {
               center: currentLatLng,
-              level: 4,
+              level: MAX_LEVEL - 1,
             });
 
             mapRef.current = map;
 
-            marker = new kakao.maps.Marker({
+            markerRef.current = new kakao.maps.Marker({
               map,
               position: currentLatLng,
               title: '현재 위치',
             });
 
-            circle = new kakao.maps.Circle({
+            circleRef.current = new kakao.maps.Circle({
               map,
               center: currentLatLng,
               radius: RADIUS_METER,
@@ -149,15 +172,34 @@ export default function MapCanvas() {
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
               const level = map.getLevel();
 
-              // 숫자가 커질수록 더 멀리 보임
-              // 500m 서비스라 너무 넓게 못 보게 제한
-              if (level > 4) {
-                map.setLevel(4);
-                showToast('현재 위치 주변 500m까지만 볼 수 있어요.');
+              if (level > MAX_LEVEL) {
+                map.setLevel(MAX_LEVEL);
+                showToast(
+                  `현재 위치 주변 ${RADIUS_METER}m까지만 볼 수 있어요.`,
+                );
               }
             });
 
             setMessage('');
+
+            try {
+              const geocoder = new kakao.maps.services.Geocoder();
+              geocoder.coord2Address(lng, lat, (result, status) => {
+                let addr = '';
+                if (status === kakao.maps.services.Status.OK && result[0]) {
+                  const r = result[0];
+                  addr =
+                    r.road_address?.address_name ||
+                    r.address?.address_name ||
+                    '';
+                }
+                onLocationReadyRef.current?.(lat, lng, addr);
+                setMapReady(true);
+              });
+            } catch {
+              onLocationReadyRef.current?.(lat, lng, '');
+              setMapReady(true);
+            }
           },
           (error) => {
             console.error(error);
@@ -180,14 +222,94 @@ export default function MapCanvas() {
     initMap();
 
     return () => {
-      if (marker) marker.setMap(null);
-      if (circle) circle.setMap(null);
+      if (markerRef.current) markerRef.current.setMap(null);
+      if (circleRef.current) circleRef.current.setMap(null);
+
+      overlayRefs.current.forEach(({ overlay, root }) => {
+        root.unmount();
+        overlay.setMap(null);
+      });
+      overlayRefs.current = [];
 
       if (toastTimerRef.current) {
         clearTimeout(toastTimerRef.current);
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !kakaoRef.current || !centerRef.current)
+      return;
+
+    const kakao = kakaoRef.current;
+    const map = mapRef.current;
+
+    overlayRefs.current.forEach(({ overlay, root }) => {
+      root.unmount();
+      overlay.setMap(null);
+    });
+    overlayRefs.current = [];
+
+    const drawableRecords = records
+      .map((record, index) => {
+        const lat = toNumber(record.lat);
+        const lng = toNumber(record.lng);
+
+        // 예전 localStorage에 lat/lng 없이 저장된 기록도 임시로 현재 위치 근처에 표시
+        if (lat === null || lng === null) {
+          return {
+            ...record,
+            lat: centerRef.current.lat + index * 0.00018,
+            lng: centerRef.current.lng + index * 0.00018,
+          };
+        }
+
+        return { ...record, lat, lng };
+      })
+      .filter((record) => {
+        const distance = getDistanceMeter(
+          centerRef.current.lat,
+          centerRef.current.lng,
+          record.lat,
+          record.lng,
+        );
+
+        return distance <= RADIUS_METER;
+      });
+
+    overlayRefs.current = drawableRecords.map((record) => {
+      const container = document.createElement('div');
+      container.className = 'customMapPinOverlay';
+
+      container.style.position = 'relative';
+      container.style.zIndex = '9999';
+
+      const root = createRoot(container);
+
+      flushSync(() => {
+        root.render(
+          <MapPin
+            record={record}
+            liked={likes.includes(record.id)}
+            onLike={onLike}
+            onSelect={onSelect}
+          />,
+        );
+      });
+
+      const overlay = new kakao.maps.CustomOverlay({
+        map,
+        position: new kakao.maps.LatLng(record.lat, record.lng),
+        content: container,
+        yAnchor: 1,
+        zIndex: 9999,
+      });
+
+      overlay.setZIndex(9999);
+
+      return { overlay, root };
+    });
+  }, [mapReady, records, likes, onLike, onSelect]);
 
   return (
     <div className="mapCanvas">
