@@ -1,5 +1,6 @@
-import { Lock, LogIn, Music2, UserRound } from 'lucide-react';
+import { Lock, Music2, UserRound } from 'lucide-react';
 import yeowoonLogo from '../../assets/main_icon_yeowoon.png';
+import googleIcon from '../../assets/google_icon.png';
 import './Sidebar.css';
 
 function Sidebar({ page, setPage, isLoggedIn, user, requireLogin }) {
@@ -55,8 +56,8 @@ function Sidebar({ page, setPage, isLoggedIn, user, requireLogin }) {
         </button>
       ) : (
         <button className="authButton" onClick={handleLogin}>
-          <LogIn size={17} />
-          구글로 로그인
+          <img src={googleIcon} alt="Google" className="googleIcon" />
+          로그인
         </button>
       )}
     </aside>
