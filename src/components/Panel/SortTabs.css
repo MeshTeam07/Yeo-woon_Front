@@ -1,0 +1,44 @@
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(220, 214, 234, 0.78);
+  border-radius: 20px;
+  margin: 14px 0;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 11px 10px;
+  border-radius: 999px;
+  color: #666b82;
+  font-weight: 800;
+}
+
+.tabs button.selected {
+  background: linear-gradient(135deg, var(--lavender-dark), var(--lavender));
+  color: white;
+  box-shadow: 0 8px 18px rgba(136, 119, 188, 0.22);
+}
+
+.countText {
+  color: #74788d;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .tabs {
+    gap: 6px;
+    padding: 6px;
+    border-radius: 18px;
+  }
+
+  .tabs button {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}

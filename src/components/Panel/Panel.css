@@ -1,0 +1,142 @@
+.sheetHandle,
+.sheetDragArea,
+.panelBody {
+  display: contents;
+}
+
+.sheetHandle {
+  display: none;
+}
+
+.panel {
+  position: fixed;
+  left: 132px;
+  top: 0;
+  bottom: 0;
+  width: 390px;
+  padding: 30px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(189, 182, 216, 0.7);
+  overflow-y: auto;
+  z-index: 4;
+}
+
+.panel > p {
+  margin: 0;
+  color: #8b8fa3;
+  font-weight: 700;
+}
+
+.panel h2 {
+  margin: 4px 0 18px;
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+
+.closePanel {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gray);
+  color: var(--lavender-dark);
+  display: grid;
+  place-items: center;
+}
+
+/* =========================
+   Tablet
+   ========================= */
+@media (max-width: 900px) {
+  .panel {
+    left: 92px;
+    width: calc(100vw - 92px);
+  }
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - 10px);
+    max-height: none;
+    padding: 0 16px calc(92px + env(safe-area-inset-bottom, 0px));
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -18px 50px rgba(34, 36, 58, 0.16);
+    z-index: 15;
+    transform: translateY(var(--sheet-y, 42dvh));
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: transform;
+    overscroll-behavior: contain;
+  }
+
+  .panel.dragging {
+    transition: none;
+    user-select: none;
+  }
+
+  .sheetDragArea {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin: 0 -16px 0;
+    padding: 8px 16px 10px;
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 28px 28px 0 0;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .panel.dragging .sheetDragArea {
+    cursor: grabbing;
+  }
+
+  .sheetHandle {
+    height: 22px;
+    display: grid;
+    place-items: center;
+  }
+
+  .sheetHandle span {
+    width: 48px;
+    height: 5px;
+    border-radius: 999px;
+    background: #c8cad5;
+  }
+
+  .panelBody {
+    display: block;
+  }
+
+  .panel > p,
+  .panel h2 {
+    pointer-events: none;
+  }
+
+  .panel h2 {
+    font-size: 24px;
+    margin-bottom: 14px;
+    padding-right: 42px;
+  }
+
+  .panel > p {
+    font-size: 13px;
+  }
+
+  .closePanel {
+    right: 14px;
+    top: 18px;
+  }
+}

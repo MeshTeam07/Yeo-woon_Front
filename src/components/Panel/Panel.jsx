@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import './Panel.css';
 
 function Panel({ title, subtitle, children, onClose }) {
   const startYRef = useRef(0);

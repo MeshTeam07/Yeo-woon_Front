@@ -1,4 +1,5 @@
 import { Heart } from 'lucide-react';
+import './MapPin.css';
 
 function MapPin({ record, index, liked, onLike, onSelect }) {
   const song = record.songs?.[0];

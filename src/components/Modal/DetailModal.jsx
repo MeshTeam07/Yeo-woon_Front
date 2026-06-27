@@ -1,4 +1,5 @@
 import { Heart, MapPin, Play, X } from 'lucide-react';
+import './Modal.css';
 
 function DetailModal({ record, liked, onClose, onLike }) {
   const cover = record.image || record.songs?.[0]?.albumImage;

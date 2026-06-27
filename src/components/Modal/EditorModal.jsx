@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import './Modal.css';
 
 function EditorModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({

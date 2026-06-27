@@ -1,0 +1,215 @@
+.sidebar {
+  width: 132px;
+  min-width: 132px;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.97);
+  border-right: 1px solid rgba(189, 182, 216, 0.7);
+  box-shadow: 8px 0 30px rgba(136, 119, 188, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 12px;
+  z-index: 5;
+}
+
+.brandHome {
+  width: 100%;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  margin-bottom: 14px;
+  padding: 0;
+  color: var(--lavender-dark);
+  background: transparent;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+
+.brandHome img {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  border-radius: 24px;
+  padding: 8px;
+  background: rgba(220, 214, 234, 0.28);
+  border: 1px solid rgba(189, 182, 216, 0.55);
+  box-shadow: 0 14px 28px rgba(136, 119, 188, 0.14);
+}
+
+.brandHome h1 {
+  width: 55px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -1px 0 0;
+  font-size: 29px;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: var(--lavender-dark);
+  font-weight: 900;
+}
+
+.brandHome:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.02);
+}
+
+.sidebar button svg {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton) {
+  width: 100%;
+  border-radius: 22px;
+  padding: 16px 8px;
+  display: grid;
+  gap: 7px;
+  place-items: center;
+  color: #62657a;
+  background: white;
+  border: 0;
+  box-shadow: none;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton):hover {
+  color: var(--lavender-dark);
+  background: transparent;
+  transform: translateY(-2px);
+  box-shadow: none;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton).active {
+  color: var(--lavender-dark);
+  background: rgba(220, 214, 234, 0.78);
+  box-shadow: none;
+  font-weight: 900;
+}
+
+.sidebar > button:not(.brandHome):not(.authButton).active svg {
+  color: var(--coral);
+}
+
+.authButton {
+  position: static;
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 20px;
+  background: var(--lavender-dark);
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(136, 119, 188, 0.24);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.authButton:hover {
+  transform: translateY(-2px);
+  background: #7664ad;
+  box-shadow: 0 16px 30px rgba(136, 119, 188, 0.32);
+}
+
+/* =========================
+   Tablet
+   ========================= */
+@media (max-width: 900px) {
+  .sidebar {
+    width: 92px;
+    min-width: 92px;
+  }
+
+  .brandHome img {
+    width: 58px;
+    height: 58px;
+    border-radius: 20px;
+  }
+
+  .brandHome h1 {
+    font-size: 22px;
+  }
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    min-width: 0;
+    height: calc(74px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    border-right: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 14px 40px rgba(34, 36, 58, 0.14);
+    z-index: 18;
+  }
+
+  .sidebar h1 {
+    flex: 0 0 74px;
+    height: 52px;
+    margin: 0 4px 0 0;
+    border-right: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--lavender-dark);
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -1.4px;
+  }
+
+  .sidebar button {
+    flex: 1 1 0;
+    width: auto;
+    height: 52px;
+    min-width: 0;
+    padding: 8px 6px;
+    border-radius: 16px;
+    grid-template-columns: auto;
+    grid-template-rows: 23px auto;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 800;
+    background: transparent;
+    border: 0;
+  }
+
+  .sidebar button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .authButton {
+    position: absolute;
+    top: -58px;
+    right: 0;
+    width: auto;
+    padding: 10px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+}
