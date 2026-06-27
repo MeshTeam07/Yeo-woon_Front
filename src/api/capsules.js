@@ -4,9 +4,10 @@ import { RADIUS_METER } from '../constants';
 export function toRecord(c, myUserId) {
   return {
     id: c.capsuleId ?? c.id,
-    owner: c.isOwner || c.author?.userId === myUserId ? 'me' : 'other',
-    author: c.author?.nickname ?? c.author ?? '',
-    address: c.address ?? c.place?.address ?? '',
+    owner: (c.isOwner || c.author?.userId === myUserId || c.user?.id === myUserId) ? 'me' : 'other',
+    author: c.user?.nickname ?? c.author?.nickname ?? c.author ?? '',
+    authorAvatar: c.user?.profileImageUrl ?? c.author?.profileImageUrl ?? null,
+    address: c.address ?? c.place?.address ?? c.place?.label ?? '',
     lat: c.latitude ?? c.lat,
     lng: c.longitude ?? c.lng,
     distance: c.distance ?? 0,

@@ -60,9 +60,37 @@
   font-weight: 800;
 }
 
+.detailAuthor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 13px;
+  color: #777c91;
+}
+
+.detailAuthorAvatar {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.detailAuthorName {
+  font-weight: 700;
+}
+
+.detailAuthorTime {
+  color: #aab0c6;
+}
+
 .detailContent h2 {
   font-size: 32px;
   margin: 12px 0;
+}
+
+.playingBtn {
+  background: rgba(145, 127, 196, 0.12) !important;
+  color: var(--lavender-dark) !important;
 }
 
 .message {

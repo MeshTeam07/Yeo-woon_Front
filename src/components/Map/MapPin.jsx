@@ -2,14 +2,18 @@ import { Heart } from 'lucide-react';
 import mapPinIcon from '../../assets/map_pin_icon.png';
 import './MapPin.css';
 
-function MapPin({ record, liked, onLike, onSelect }) {
+function MapPin({ record, liked, onLike, onSelect, onHoverChange }) {
   const song = record.songs?.[0];
 
   const heartFill = liked ? 'currentColor' : 'none';
   const heartStrokeWidth = liked ? 0 : 2.5;
 
   return (
-    <div className="mapPinGroup">
+    <div
+      className="mapPinGroup"
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
+    >
       <button
         type="button"
         className={`mapPin ${liked ? 'liked' : ''}`}

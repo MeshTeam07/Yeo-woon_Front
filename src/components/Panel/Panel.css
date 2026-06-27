@@ -144,6 +144,13 @@
   box-shadow: 0 0 0 3px rgba(145, 127, 196, 0.12);
 }
 
+.listCountText {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9196aa;
+  margin: 6px 2px 2px;
+}
+
 .profileImgUpload {
   display: block;
   padding: 10px 14px;

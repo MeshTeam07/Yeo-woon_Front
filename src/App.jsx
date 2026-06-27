@@ -52,6 +52,7 @@ function App() {
   const [autoOpenProfileEdit, setAutoOpenProfileEdit] = useState(false);
   const [nearbyOffset, setNearbyOffset] = useState(0);
   const [hasMoreNearby, setHasMoreNearby] = useState(false);
+  const [nearbyTotal, setNearbyTotal] = useState(null);
   const nearbyLoadingRef = useRef(false);
 
   // 앱 로드 시 로그인 상태 확인 (OAuth 콜백 URL 정리 포함)
@@ -95,9 +96,11 @@ function App() {
         const res = await getNearbyCapsules({
           latitude: lat, longitude: lng, radius: queryRadius, sort: apiSort,
         });
+        const total = res?.totalCount ?? null;
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        setNearbyTotal(total);
         setRecords(list.map((c) => toRecord(c, user?.userId)));
-        setHasMoreNearby(list.length >= 20);
+        setHasMoreNearby(list.length >= 20 && (total == null || list.length < total));
         const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
         setLikes(likedIds);
         saveLikes(likedIds);
@@ -121,9 +124,11 @@ function App() {
           latitude: position.lat, longitude: position.lng,
           radius: newRadius, sort: apiSort, offset: 0,
         });
+        const total = res?.totalCount ?? null;
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        setNearbyTotal(total);
         setRecords(list.map((c) => toRecord(c, user?.userId)));
-        setHasMoreNearby(list.length >= 20);
+        setHasMoreNearby(list.length >= 20 && (total == null || list.length < total));
         const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
         setLikes(likedIds);
         saveLikes(likedIds);
@@ -145,16 +150,21 @@ function App() {
         latitude: position.lat, longitude: position.lng,
         radius, sort: apiSort, limit: 20, offset: nextOffset,
       });
+      const total = res?.totalCount ?? nearbyTotal;
       const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
-      setRecords((prev) => [...prev, ...list.map((c) => toRecord(c, user?.userId))]);
+      if (res?.totalCount != null) setNearbyTotal(res.totalCount);
+      setRecords((prev) => {
+        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId))];
+        setHasMoreNearby(list.length >= 20 && (total == null || merged.length < total));
+        return merged;
+      });
       setNearbyOffset(nextOffset);
-      setHasMoreNearby(list.length >= 20);
     } catch {
       // 추가 로드 실패 시 현재 목록 유지
     } finally {
       nearbyLoadingRef.current = false;
     }
-  }, [position, radius, sort, nearbyOffset, hasMoreNearby, user]);
+  }, [position, radius, sort, nearbyOffset, hasMoreNearby, nearbyTotal, user]);
 
   const nearbyRecords = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -165,7 +175,17 @@ function App() {
   }, [records, sort]);
 
   const myRecords = records.filter((item) => item.owner === 'me');
-  const likedRecords = records.filter((item) => likes.includes(item.id));
+
+  // 좋아요 탭에서 API로 로드한 항목 ID를 likes state에 병합
+  const handleLikedIdsLoaded = useCallback((ids) => {
+    setLikes((prev) => {
+      const newIds = ids.filter((id) => !prev.includes(id));
+      if (newIds.length === 0) return prev;
+      const merged = [...prev, ...newIds];
+      saveLikes(merged);
+      return merged;
+    });
+  }, []);
 
   const showToast = (message) => {
     setToast(message);
@@ -239,9 +259,11 @@ function App() {
     try {
       const song = record.songs?.[0] || {};
       const created = await createCapsule({
-        latitude: position?.lat,
-        longitude: position?.lng,
-        address: record.address,
+        place: {
+          latitude: position?.lat,
+          longitude: position?.lng,
+          address: record.address,
+        },
         memo: record.message,
         photoUrl: record.image || null,
         song: {
@@ -315,7 +337,9 @@ function App() {
           onClose={() => setPage('map')}
         >
           <SortTabs value={sort} onChange={setSort} />
-          <div className="countText">반경 {radius}m · {nearbyRecords.length}개</div>
+          <div className="countText">
+            반경 {radius}m · 총 {nearbyTotal ?? nearbyRecords.length}개
+          </div>
           <RecordList
             records={nearbyRecords}
             likes={likes}
@@ -331,7 +355,6 @@ function App() {
           user={user}
           onUserUpdate={setUser}
           myRecords={myRecords}
-          likedRecords={likedRecords}
           likes={likes}
           onLike={toggleLike}
           onSelect={setSelected}
@@ -341,6 +364,7 @@ function App() {
           onLogout={handleLogout}
           autoOpenEdit={autoOpenProfileEdit}
           onEditOpened={() => setAutoOpenProfileEdit(false)}
+          onLikedIdsLoaded={handleLikedIdsLoaded}
         />
       )}
 

@@ -66,6 +66,40 @@
   color: #85899c;
 }
 
+.cardAuthor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cardAuthor > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.authorAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.authorAvatarPlaceholder {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(220, 214, 234, 0.6);
+  border: 1px solid rgba(189, 182, 216, 0.5);
+  display: grid;
+  place-items: center;
+  color: var(--lavender-dark);
+  flex-shrink: 0;
+}
+
 .heart {
   display: flex;
   align-items: center;

@@ -1,4 +1,4 @@
-import { Heart, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Heart, MapPin, Pencil, Trash2, UserRound } from 'lucide-react';
 import { formatDistance, formatTime } from '../../utils/format';
 import './RecordCard.css';
 
@@ -19,7 +19,16 @@ function RecordCard({ record, liked, onLike, onSelect, editable, onEdit, onDelet
         <p>{record.message}</p>
 
         <div className="cardFooter">
-          <span>{record.author}</span>
+          <div className="cardAuthor">
+            {record.authorAvatar ? (
+              <img src={record.authorAvatar} alt="작성자" className="authorAvatar" />
+            ) : (
+              <div className="authorAvatarPlaceholder">
+                <UserRound size={12} />
+              </div>
+            )}
+            <span>{record.author || '익명'}</span>
+          </div>
 
           <button
             className={liked ? 'heart liked' : 'heart'}

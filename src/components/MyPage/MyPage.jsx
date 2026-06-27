@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { UserRound } from 'lucide-react';
-import { getMyCapsules, updateProfile } from '../../api/user';
+import { getMyCapsules, getLikedCapsules, getLikedCount, updateProfile } from '../../api/user';
 import { toRecord } from '../../api/capsules';
 import { Panel } from '../Panel';
 import { RecordList } from '../Record';
@@ -28,7 +28,6 @@ function MyPage({
   user,
   onUserUpdate,
   myRecords: myRecordsProp,
-  likedRecords,
   likes,
   onLike,
   onSelect,
@@ -38,13 +37,21 @@ function MyPage({
   onLogout,
   autoOpenEdit = false,
   onEditOpened,
+  onLikedIdsLoaded,
 }) {
   const [tab, setTab] = useState('mine');
   const [myRecords, setMyRecords] = useState(myRecordsProp || []);
   const [editing, setEditing] = useState(autoOpenEdit);
   const [capsuleOffset, setCapsuleOffset] = useState(0);
   const [hasMoreCapsules, setHasMoreCapsules] = useState(false);
+  const [capsuleTotal, setCapsuleTotal] = useState(null);
   const capsuleLoadingRef = useRef(false);
+
+  const [likedFromApi, setLikedFromApi] = useState([]);
+  const [likedOffset, setLikedOffset] = useState(0);
+  const [hasMoreLiked, setHasMoreLiked] = useState(false);
+  const [likedTotal, setLikedTotal] = useState(null);
+  const likedLoadingRef = useRef(false);
 
   useEffect(() => {
     if (autoOpenEdit) {
@@ -57,15 +64,18 @@ function MyPage({
   const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || '');
   const [saving, setSaving] = useState(false);
 
+  // 내가 만든 캡슐 조회
   useEffect(() => {
     if (tab !== 'mine') return;
     setCapsuleOffset(0);
     capsuleLoadingRef.current = false;
     getMyCapsules(0)
       .then((res) => {
+        const total = res?.totalCount ?? null;
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        setCapsuleTotal(total);
         setMyRecords(list.map((c) => toRecord(c, user?.userId)));
-        setHasMoreCapsules(list.length >= 20);
+        setHasMoreCapsules(list.length >= 20 && (total == null || list.length < total));
       })
       .catch(() => {
         setMyRecords(myRecordsProp || []);
@@ -79,16 +89,67 @@ function MyPage({
     const nextOffset = capsuleOffset + 20;
     try {
       const res = await getMyCapsules(nextOffset);
+      const total = res?.totalCount ?? capsuleTotal;
       const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
-      setMyRecords((prev) => [...prev, ...list.map((c) => toRecord(c, user?.userId))]);
+      if (res?.totalCount != null) setCapsuleTotal(res.totalCount);
+      setMyRecords((prev) => {
+        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId))];
+        setHasMoreCapsules(list.length >= 20 && (total == null || merged.length < total));
+        return merged;
+      });
       setCapsuleOffset(nextOffset);
-      setHasMoreCapsules(list.length >= 20);
     } catch {
-      // 추가 로드 실패 시 현재 목록 유지
+      // ignore
     } finally {
       capsuleLoadingRef.current = false;
     }
-  }, [hasMoreCapsules, capsuleOffset, user]);
+  }, [hasMoreCapsules, capsuleOffset, capsuleTotal, user]);
+
+  // 좋아요 누른 캡슐 조회
+  useEffect(() => {
+    if (tab !== 'likes') return;
+    setLikedOffset(0);
+    likedLoadingRef.current = false;
+    getLikedCount().then((res) => setLikedTotal(res?.totalCount ?? null)).catch(() => {});
+    getLikedCapsules(0)
+      .then((res) => {
+        const total = res?.totalCount ?? null;
+        const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        if (total != null) setLikedTotal(total);
+        const records = list.map((c) => toRecord(c, user?.userId));
+        setLikedFromApi(records);
+        setHasMoreLiked(list.length >= 20 && (total == null || list.length < total));
+        onLikedIdsLoaded?.(records.map((r) => r.id));
+      })
+      .catch(() => {
+        setLikedFromApi([]);
+        setHasMoreLiked(false);
+      });
+  }, [tab]);
+
+  const loadMoreLiked = useCallback(async () => {
+    if (!hasMoreLiked || likedLoadingRef.current) return;
+    likedLoadingRef.current = true;
+    const nextOffset = likedOffset + 20;
+    try {
+      const res = await getLikedCapsules(nextOffset);
+      const total = res?.totalCount ?? likedTotal;
+      const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+      if (res?.totalCount != null) setLikedTotal(res.totalCount);
+      const records = list.map((c) => toRecord(c, user?.userId));
+      setLikedFromApi((prev) => {
+        const merged = [...prev, ...records];
+        setHasMoreLiked(list.length >= 20 && (total == null || merged.length < total));
+        return merged;
+      });
+      setLikedOffset(nextOffset);
+      onLikedIdsLoaded?.(records.map((r) => r.id));
+    } catch {
+      // ignore
+    } finally {
+      likedLoadingRef.current = false;
+    }
+  }, [hasMoreLiked, likedOffset, likedTotal, user]);
 
   useEffect(() => {
     setNickname(user?.nickname || '');
@@ -116,7 +177,9 @@ function MyPage({
     }
   };
 
-  const current = tab === 'mine' ? myRecords : likedRecords;
+  // 좋아요 취소 시 해당 항목이 즉시 사라지도록 likes prop으로 필터
+  const displayedLiked = likedFromApi.filter((r) => likes.includes(r.id));
+  const current = tab === 'mine' ? myRecords : displayedLiked;
 
   return (
     <Panel title="마이페이지" subtitle="내 기록을 모아보는 공간" onClose={onClose}>
@@ -172,6 +235,13 @@ function MyPage({
         </button>
       </div>
 
+      {tab === 'mine' && capsuleTotal != null && (
+        <p className="listCountText">총 {capsuleTotal}개</p>
+      )}
+      {tab === 'likes' && likedTotal != null && (
+        <p className="listCountText">총 {likedTotal}개</p>
+      )}
+
       <RecordList
         records={current}
         likes={likes}
@@ -183,6 +253,9 @@ function MyPage({
       />
       {tab === 'mine' && hasMoreCapsules && (
         <Sentinel onVisible={loadMoreCapsules} />
+      )}
+      {tab === 'likes' && hasMoreLiked && (
+        <Sentinel onVisible={loadMoreLiked} />
       )}
     </Panel>
   );

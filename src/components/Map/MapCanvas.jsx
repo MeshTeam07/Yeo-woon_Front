@@ -207,7 +207,12 @@ export default function MapCanvas({
                 setMapReady(true);
               });
             } catch {
-              onLocationReadyRef.current?.(lat, lng, '', levelToRadius(MAX_LEVEL - 1));
+              onLocationReadyRef.current?.(
+                lat,
+                lng,
+                '',
+                levelToRadius(MAX_LEVEL - 1),
+              );
               setMapReady(true);
             }
           },
@@ -294,16 +299,6 @@ export default function MapCanvas({
       container.style.position = 'relative';
       container.style.zIndex = '9999';
 
-      const root = createRoot(container);
-      root.render(
-        <MapPin
-          record={record}
-          liked={likes.includes(record.id)}
-          onLike={onLike}
-          onSelect={onSelect}
-        />,
-      );
-
       const overlay = new kakao.maps.CustomOverlay({
         map,
         position: new kakao.maps.LatLng(record.lat, record.lng),
@@ -313,6 +308,22 @@ export default function MapCanvas({
       });
 
       overlay.setZIndex(9999);
+
+      const handlePinHover = (isHovered) => {
+        overlay.setZIndex(isHovered ? 999999 : 9999);
+        container.style.zIndex = isHovered ? '999999' : '9999';
+      };
+
+      const root = createRoot(container);
+      root.render(
+        <MapPin
+          record={record}
+          liked={likes.includes(record.id)}
+          onLike={onLike}
+          onSelect={onSelect}
+          onHoverChange={handlePinHover}
+        />,
+      );
 
       return { overlay, root };
     });
