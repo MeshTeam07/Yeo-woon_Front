@@ -3,6 +3,7 @@ import { Lock, Plus } from 'lucide-react';
 
 import { RADIUS_METER } from './constants';
 import { logout as apiLogout } from './api/auth';
+import { saveToken, clearToken } from './api/client';
 import { getMe } from './api/user';
 import { getNearbyCapsules, createCapsule, toRecord } from './api/capsules';
 import { loadLikes, saveLikes } from './utils/storage';
@@ -26,12 +27,25 @@ function App() {
   const [editing, setEditing] = useState(null);
   const [toast, setToast] = useState('');
 
-  // 앱 로드 시 로그인 상태 확인
+  // 앱 로드 시 로그인 상태 확인 (OAuth 콜백 URL 정리 포함)
   useEffect(() => {
+    // 백엔드가 //oauth/callback (슬래시 두 개)으로 보내는 경우도 처리
+    const pathname = window.location.pathname.replace(/\/+/g, '/');
+    const isOAuthCallback = pathname.startsWith('/oauth/callback');
+    const params = new URLSearchParams(window.location.search);
+    const isNewUser = params.get('isNewUser') === 'true';
+    const accessToken = params.get('accessToken');
+
+    if (isOAuthCallback) {
+      if (accessToken) saveToken(accessToken);
+      window.history.replaceState(null, '', '/');
+    }
+
     getMe()
       .then((data) => {
         setUser(data);
         setIsLoggedIn(true);
+        if (isNewUser) setPage('mypage');
       })
       .catch(() => {
         setUser(null);
@@ -151,6 +165,7 @@ function App() {
     } catch {
       // 무시
     }
+    clearToken();
     setUser(null);
     setIsLoggedIn(false);
     setPage('map');

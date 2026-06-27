@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { flushSync } from 'react-dom';
 import './MapCanvas.css';
 import MapPin from './MapPin';
 import { RADIUS_METER } from '../../constants';
@@ -285,17 +284,14 @@ export default function MapCanvas({
       container.style.zIndex = '9999';
 
       const root = createRoot(container);
-
-      flushSync(() => {
-        root.render(
-          <MapPin
-            record={record}
-            liked={likes.includes(record.id)}
-            onLike={onLike}
-            onSelect={onSelect}
-          />,
-        );
-      });
+      root.render(
+        <MapPin
+          record={record}
+          liked={likes.includes(record.id)}
+          onLike={onLike}
+          onSelect={onSelect}
+        />,
+      );
 
       const overlay = new kakao.maps.CustomOverlay({
         map,
