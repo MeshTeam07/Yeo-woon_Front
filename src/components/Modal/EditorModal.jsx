@@ -149,11 +149,9 @@ function EditorModal({ initial, onClose, onSubmit }) {
         <h2>{form.id ? '여운 수정하기' : '순간 남기기'}</h2>
 
         <label>주소</label>
-        <input
-          value={form.address}
-          readOnly
-          style={{ background: '#f5f4f9', color: '#777', cursor: 'default' }}
-        />
+        <div className="readonlyAddress">
+          {form.address || '주소 정보가 없습니다'}
+        </div>
 
         <label>문구 *</label>
         <textarea
@@ -192,11 +190,18 @@ function EditorModal({ initial, onClose, onSubmit }) {
               value={songQuery}
               onChange={handleSongQueryChange}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleSearch(); }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearch();
+                }
               }}
               placeholder="노래 제목 또는 가수 검색"
             />
-            <button type="button" className="songSearchBtn" onClick={handleSearch}>
+            <button
+              type="button"
+              className="songSearchBtn"
+              onClick={handleSearch}
+            >
               검색
             </button>
           </div>
