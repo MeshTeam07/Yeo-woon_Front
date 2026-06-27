@@ -29,11 +29,20 @@ export function toRecord(c, myUserId) {
   };
 }
 
-export const getNearbyCapsules = ({ latitude, longitude, radius = RADIUS_METER, sort = 'distance', limit = 20 }) =>
-  client.get('/capsules/nearby', { params: { latitude, longitude, radius, sort, limit } });
+export const getNearbyCapsules = ({
+  latitude, longitude, radius = RADIUS_METER,
+  sort = 'distance', limit = 20, offset = 0,
+}) =>
+  client.get('/capsules/nearby', { params: { latitude, longitude, radius, sort, limit, offset } });
 
 export const getCapsuleById = (capsuleId) =>
   client.get(`/capsules/${capsuleId}`);
 
 export const createCapsule = (data) =>
   client.post('/capsules', data);
+
+export const likeCapsule = (capsuleId) =>
+  client.post(`/capsules/${capsuleId}/likes`);
+
+export const unlikeCapsule = (capsuleId) =>
+  client.delete(`/capsules/${capsuleId}/likes`);

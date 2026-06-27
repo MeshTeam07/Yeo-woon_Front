@@ -144,6 +144,31 @@
   box-shadow: 0 0 0 3px rgba(145, 127, 196, 0.12);
 }
 
+.profileImgUpload {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(145, 127, 196, 0.45);
+  background: rgba(220, 214, 234, 0.22);
+  color: var(--lavender-dark);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.profileImgUpload input {
+  display: none;
+}
+
+.profilePreview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(145, 127, 196, 0.4);
+}
+
 /* Sidebar avatar */
 .sidebarAvatar {
   width: 20px;

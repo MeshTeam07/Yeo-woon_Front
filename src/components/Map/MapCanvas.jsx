@@ -4,6 +4,8 @@ import './MapCanvas.css';
 import MapPin from './MapPin';
 import { RADIUS_METER } from '../../constants';
 const MAX_LEVEL = 3;
+const levelToRadius = (level) =>
+  Math.min(RADIUS_METER, Math.round((RADIUS_METER * level) / MAX_LEVEL));
 
 function loadKakaoMapScript() {
   return new Promise((resolve, reject) => {
@@ -65,11 +67,17 @@ export default function MapCanvas({
   onLike,
   onSelect,
   onLocationReady,
+  onRadiusChange,
 }) {
   const onLocationReadyRef = useRef(onLocationReady);
   useEffect(() => {
     onLocationReadyRef.current = onLocationReady;
   }, [onLocationReady]);
+
+  const onRadiusChangeRef = useRef(onRadiusChange);
+  useEffect(() => {
+    onRadiusChangeRef.current = onRadiusChange;
+  }, [onRadiusChange]);
 
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
@@ -176,7 +184,9 @@ export default function MapCanvas({
                 showToast(
                   `현재 위치 주변 ${RADIUS_METER}m까지만 볼 수 있어요.`,
                 );
+                return;
               }
+              onRadiusChangeRef.current?.(levelToRadius(level));
             });
 
             setMessage('');
@@ -192,11 +202,12 @@ export default function MapCanvas({
                     r.address?.address_name ||
                     '';
                 }
-                onLocationReadyRef.current?.(lat, lng, addr);
+                const initRadius = levelToRadius(MAX_LEVEL - 1);
+                onLocationReadyRef.current?.(lat, lng, addr, initRadius);
                 setMapReady(true);
               });
             } catch {
-              onLocationReadyRef.current?.(lat, lng, '');
+              onLocationReadyRef.current?.(lat, lng, '', levelToRadius(MAX_LEVEL - 1));
               setMapReady(true);
             }
           },

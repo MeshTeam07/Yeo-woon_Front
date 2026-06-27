@@ -35,7 +35,6 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
   const [songQuery, setSongQuery] = useState(form.songs[0]?.title || '');
   const [songResults, setSongResults] = useState([]);
   const [searching, setSearching] = useState(false);
-  const debounceRef = useRef(null);
 
   const handleSongQueryChange = (e) => {
     const val = e.target.value;
@@ -43,25 +42,21 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
     if (!val.trim()) setSongResults([]);
   };
 
-  useEffect(() => {
+  const handleSearch = async () => {
     if (!songQuery.trim()) return;
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const res = await searchSongs({ keyword: songQuery });
-        const list = Array.isArray(res)
-          ? res
-          : (res?.songs ?? res?.results ?? []);
-        setSongResults(list.slice(0, 8));
-      } catch {
-        setSongResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 500);
-    return () => clearTimeout(debounceRef.current);
-  }, [songQuery]);
+    setSearching(true);
+    try {
+      const res = await searchSongs({ keyword: songQuery });
+      const list = Array.isArray(res)
+        ? res
+        : (res?.items ?? res?.songs ?? res?.results ?? []);
+      setSongResults(list.slice(0, 10));
+    } catch {
+      setSongResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   // 카메라 스트림이 열리면 video 엘리먼트에 연결
   useEffect(() => {
@@ -190,11 +185,19 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
 
         <label>함께 남길 노래 1개 *</label>
         <div className="songSearch">
-          <input
-            value={songQuery}
-            onChange={handleSongQueryChange}
-            placeholder="노래 제목 또는 가수 검색"
-          />
+          <div className="songSearchRow">
+            <input
+              value={songQuery}
+              onChange={handleSongQueryChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleSearch(); }
+              }}
+              placeholder="노래 제목 또는 가수 검색"
+            />
+            <button type="button" className="songSearchBtn" onClick={handleSearch}>
+              검색
+            </button>
+          </div>
           {searching && <div className="songSearchHint">검색 중...</div>}
           {songResults.length > 0 && (
             <ul className="songResults">

@@ -1,9 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { UserRound } from 'lucide-react';
 import { getMyCapsules, updateProfile } from '../../api/user';
 import { toRecord } from '../../api/capsules';
 import { Panel } from '../Panel';
 import { RecordList } from '../Record';
+
+function Sentinel({ onVisible }) {
+  const cbRef = useRef(onVisible);
+  useEffect(() => {
+    cbRef.current = onVisible;
+  });
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) cbRef.current?.(); },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return <div ref={ref} style={{ height: 4 }} />;
+}
 
 function MyPage({
   user,
@@ -17,30 +36,72 @@ function MyPage({
   onDelete,
   onClose,
   onLogout,
+  autoOpenEdit = false,
+  onEditOpened,
 }) {
   const [tab, setTab] = useState('mine');
   const [myRecords, setMyRecords] = useState(myRecordsProp || []);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(autoOpenEdit);
+  const [capsuleOffset, setCapsuleOffset] = useState(0);
+  const [hasMoreCapsules, setHasMoreCapsules] = useState(false);
+  const capsuleLoadingRef = useRef(false);
+
+  useEffect(() => {
+    if (autoOpenEdit) {
+      setEditing(true);
+      onEditOpened?.();
+    }
+  }, [autoOpenEdit]);
+
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || '');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (tab !== 'mine') return;
-    getMyCapsules()
+    setCapsuleOffset(0);
+    capsuleLoadingRef.current = false;
+    getMyCapsules(0)
       .then((res) => {
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
         setMyRecords(list.map((c) => toRecord(c, user?.userId)));
+        setHasMoreCapsules(list.length >= 20);
       })
       .catch(() => {
         setMyRecords(myRecordsProp || []);
+        setHasMoreCapsules(false);
       });
   }, [tab]);
+
+  const loadMoreCapsules = useCallback(async () => {
+    if (!hasMoreCapsules || capsuleLoadingRef.current) return;
+    capsuleLoadingRef.current = true;
+    const nextOffset = capsuleOffset + 20;
+    try {
+      const res = await getMyCapsules(nextOffset);
+      const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+      setMyRecords((prev) => [...prev, ...list.map((c) => toRecord(c, user?.userId))]);
+      setCapsuleOffset(nextOffset);
+      setHasMoreCapsules(list.length >= 20);
+    } catch {
+      // 추가 로드 실패 시 현재 목록 유지
+    } finally {
+      capsuleLoadingRef.current = false;
+    }
+  }, [hasMoreCapsules, capsuleOffset, user]);
 
   useEffect(() => {
     setNickname(user?.nickname || '');
     setProfileImageUrl(user?.profileImageUrl || '');
   }, [user]);
+
+  const handleProfileImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setProfileImageUrl(ev.target.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -88,12 +149,14 @@ function MyPage({
             onChange={(e) => setNickname(e.target.value)}
             placeholder="닉네임 입력"
           />
-          <label>프로필 이미지 URL</label>
-          <input
-            value={profileImageUrl}
-            onChange={(e) => setProfileImageUrl(e.target.value)}
-            placeholder="이미지 URL 입력"
-          />
+          <label>프로필 사진</label>
+          {profileImageUrl && (
+            <img src={profileImageUrl} alt="미리보기" className="profilePreview" />
+          )}
+          <label className="profileImgUpload">
+            파일 선택
+            <input type="file" accept="image/*" onChange={handleProfileImageFile} />
+          </label>
           <button className="submitButton" onClick={handleSave} disabled={saving}>
             {saving ? '저장 중...' : '저장'}
           </button>
@@ -118,6 +181,9 @@ function MyPage({
         onEdit={onEdit}
         onDelete={onDelete}
       />
+      {tab === 'mine' && hasMoreCapsules && (
+        <Sentinel onVisible={loadMoreCapsules} />
+      )}
     </Panel>
   );
 }

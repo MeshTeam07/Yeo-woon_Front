@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lock, Plus } from 'lucide-react';
 
 import { RADIUS_METER } from './constants';
 import { logout as apiLogout } from './api/auth';
 import { saveToken, clearToken } from './api/client';
 import { getMe } from './api/user';
-import { getNearbyCapsules, createCapsule, toRecord } from './api/capsules';
+import {
+  getNearbyCapsules, createCapsule, toRecord,
+  likeCapsule, unlikeCapsule,
+} from './api/capsules';
 import { loadLikes, saveLikes } from './utils/storage';
 import Sidebar from './components/Sidebar';
 import { MapCanvas } from './components/Map';
@@ -13,6 +16,25 @@ import { Panel, SortTabs } from './components/Panel';
 import { RecordList } from './components/Record';
 import MyPage from './components/MyPage';
 import { DetailModal, EditorModal } from './components/Modal';
+
+function Sentinel({ onVisible }) {
+  const cbRef = useRef(onVisible);
+  useEffect(() => {
+    cbRef.current = onVisible;
+  });
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) cbRef.current?.(); },
+      { threshold: 0.1 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return <div ref={ref} style={{ height: 4 }} />;
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -22,14 +44,18 @@ function App() {
   const [records, setRecords] = useState([]);
   const [likes, setLikes] = useState(loadLikes);
   const [position, setPosition] = useState(null);
+  const [radius, setRadius] = useState(RADIUS_METER);
   const [currentAddress, setCurrentAddress] = useState('');
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(null);
   const [toast, setToast] = useState('');
+  const [autoOpenProfileEdit, setAutoOpenProfileEdit] = useState(false);
+  const [nearbyOffset, setNearbyOffset] = useState(0);
+  const [hasMoreNearby, setHasMoreNearby] = useState(false);
+  const nearbyLoadingRef = useRef(false);
 
   // 앱 로드 시 로그인 상태 확인 (OAuth 콜백 URL 정리 포함)
   useEffect(() => {
-    // 백엔드가 //oauth/callback (슬래시 두 개)으로 보내는 경우도 처리
     const pathname = window.location.pathname.replace(/\/+/g, '/');
     const isOAuthCallback = pathname.startsWith('/oauth/callback');
     const params = new URLSearchParams(window.location.search);
@@ -45,7 +71,10 @@ function App() {
       .then((data) => {
         setUser(data);
         setIsLoggedIn(true);
-        if (isNewUser) setPage('mypage');
+        if (isNewUser) {
+          setPage('mypage');
+          setAutoOpenProfileEdit(true);
+        }
       })
       .catch(() => {
         setUser(null);
@@ -53,21 +82,79 @@ function App() {
       });
   }, []);
 
-  // GPS 준비 → 주변 캡슐 조회
+  // GPS 준비 → 주변 캡슐 조회 (initRadius: MapCanvas에서 계산한 초기 줌 반경)
   const handleLocationReady = useCallback(
-    async (lat, lng, addr) => {
+    async (lat, lng, addr, initRadius) => {
+      const queryRadius = initRadius ?? radius;
+      if (initRadius != null) setRadius(initRadius);
       setPosition({ lat, lng });
       setCurrentAddress(addr);
+      setNearbyOffset(0);
       try {
-        const res = await getNearbyCapsules({ latitude: lat, longitude: lng, sort });
+        const apiSort = sort === 'recommend' ? 'recommended' : sort;
+        const res = await getNearbyCapsules({
+          latitude: lat, longitude: lng, radius: queryRadius, sort: apiSort,
+        });
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
         setRecords(list.map((c) => toRecord(c, user?.userId)));
+        setHasMoreNearby(list.length >= 20);
+        const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
+        setLikes(likedIds);
+        saveLikes(likedIds);
       } catch {
         // 네트워크 에러 시 빈 목록 유지
       }
     },
-    [sort, user],
+    [sort, user, radius],
   );
+
+  // 지도 줌 변경 → 반경으로 재조회
+  const handleRadiusChange = useCallback(
+    async (newRadius) => {
+      setRadius(newRadius);
+      setNearbyOffset(0);
+      nearbyLoadingRef.current = false;
+      if (!position) return;
+      try {
+        const apiSort = sort === 'recommend' ? 'recommended' : sort;
+        const res = await getNearbyCapsules({
+          latitude: position.lat, longitude: position.lng,
+          radius: newRadius, sort: apiSort, offset: 0,
+        });
+        const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        setRecords(list.map((c) => toRecord(c, user?.userId)));
+        setHasMoreNearby(list.length >= 20);
+        const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
+        setLikes(likedIds);
+        saveLikes(likedIds);
+      } catch {
+        // 네트워크 에러 시 현재 목록 유지
+      }
+    },
+    [position, sort, user],
+  );
+
+  // 주변 목록 추가 로드 (무한스크롤)
+  const loadMoreNearby = useCallback(async () => {
+    if (!position || !hasMoreNearby || nearbyLoadingRef.current) return;
+    nearbyLoadingRef.current = true;
+    const nextOffset = nearbyOffset + 20;
+    try {
+      const apiSort = sort === 'recommend' ? 'recommended' : sort;
+      const res = await getNearbyCapsules({
+        latitude: position.lat, longitude: position.lng,
+        radius, sort: apiSort, limit: 20, offset: nextOffset,
+      });
+      const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+      setRecords((prev) => [...prev, ...list.map((c) => toRecord(c, user?.userId))]);
+      setNearbyOffset(nextOffset);
+      setHasMoreNearby(list.length >= 20);
+    } catch {
+      // 추가 로드 실패 시 현재 목록 유지
+    } finally {
+      nearbyLoadingRef.current = false;
+    }
+  }, [position, radius, sort, nearbyOffset, hasMoreNearby, user]);
 
   const nearbyRecords = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -93,23 +180,43 @@ function App() {
     return true;
   };
 
-  const toggleLike = (id) => {
+  const toggleLike = async (id) => {
     if (!requireLogin()) return;
-    const isLiked = likes.includes(id);
-    const nextLikes = isLiked ? likes.filter((l) => l !== id) : [...likes, id];
-    const amount = isLiked ? -1 : 1;
+    const wasLiked = likes.includes(id);
+    const delta = wasLiked ? -1 : 1;
+    const nextLikes = wasLiked ? likes.filter((l) => l !== id) : [...likes, id];
 
+    // 낙관적 업데이트
     setLikes(nextLikes);
     saveLikes(nextLikes);
-
     setRecords((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, likes: Math.max(0, item.likes + amount) } : item,
+        item.id === id ? { ...item, likes: Math.max(0, item.likes + delta) } : item,
       ),
     );
     setSelected((prev) =>
-      prev?.id === id ? { ...prev, likes: Math.max(0, prev.likes + amount) } : prev,
+      prev?.id === id ? { ...prev, likes: Math.max(0, prev.likes + delta) } : prev,
     );
+
+    try {
+      if (wasLiked) {
+        await unlikeCapsule(id);
+      } else {
+        await likeCapsule(id);
+      }
+    } catch {
+      // 롤백
+      setLikes(likes);
+      saveLikes(likes);
+      setRecords((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, likes: Math.max(0, item.likes - delta) } : item,
+        ),
+      );
+      setSelected((prev) =>
+        prev?.id === id ? { ...prev, likes: Math.max(0, prev.likes - delta) } : prev,
+      );
+    }
   };
 
   const deleteRecord = (id) => {
@@ -122,7 +229,6 @@ function App() {
 
   const upsertRecord = async (record) => {
     if (record.id) {
-      // 수정: 로컬만 반영 (수정 API 없음)
       setRecords((prev) => prev.map((item) => (item.id === record.id ? record : item)));
       setEditing(null);
       setPage('mypage');
@@ -130,7 +236,6 @@ function App() {
       return;
     }
 
-    // 신규: API 호출
     try {
       const song = record.songs?.[0] || {};
       const created = await createCapsule({
@@ -169,6 +274,8 @@ function App() {
     setUser(null);
     setIsLoggedIn(false);
     setPage('map');
+    setLikes([]);
+    saveLikes([]);
     showToast('로그아웃 되었어요.');
   };
 
@@ -189,6 +296,7 @@ function App() {
           onLike={toggleLike}
           onSelect={setSelected}
           onLocationReady={handleLocationReady}
+          onRadiusChange={handleRadiusChange}
         />
 
         <button
@@ -207,13 +315,14 @@ function App() {
           onClose={() => setPage('map')}
         >
           <SortTabs value={sort} onChange={setSort} />
-          <div className="countText">반경 {RADIUS_METER}m · {nearbyRecords.length}개</div>
+          <div className="countText">반경 {radius}m · {nearbyRecords.length}개</div>
           <RecordList
             records={nearbyRecords}
             likes={likes}
             onLike={toggleLike}
             onSelect={setSelected}
           />
+          {hasMoreNearby && <Sentinel onVisible={loadMoreNearby} />}
         </Panel>
       )}
 
@@ -230,6 +339,8 @@ function App() {
           onDelete={deleteRecord}
           onClose={() => setPage('map')}
           onLogout={handleLogout}
+          autoOpenEdit={autoOpenProfileEdit}
+          onEditOpened={() => setAutoOpenProfileEdit(false)}
         />
       )}
 
