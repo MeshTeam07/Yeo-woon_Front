@@ -3,9 +3,11 @@ import { Camera, X } from 'lucide-react';
 import { searchSongs } from '../../api/songs';
 import './Modal.css';
 
-function EditorModal({ initial, position, onClose, onSubmit }) {
+function EditorModal({ initial, onClose, onSubmit }) {
   const [form, setForm] = useState({
     id: initial.id,
+    lat: initial.lat,
+    lng: initial.lng,
     owner: initial.owner,
     author: initial.author,
     address: initial.address || '',

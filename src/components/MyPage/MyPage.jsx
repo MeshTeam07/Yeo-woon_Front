@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { UserRound } from 'lucide-react';
 import { getMyCapsules, getLikedCapsules, getLikedCount, updateProfile } from '../../api/user';
 import { toRecord } from '../../api/capsules';
+import { getPresignedUrl, uploadFileToS3 } from '../../api/uploads';
 import { Panel } from '../Panel';
 import { RecordList } from '../Record';
 
@@ -38,6 +39,7 @@ function MyPage({
   autoOpenEdit = false,
   onEditOpened,
   onLikedIdsLoaded,
+  myRecordsVersion = 0,
 }) {
   const [tab, setTab] = useState('mine');
   const [myRecords, setMyRecords] = useState(myRecordsProp || []);
@@ -62,6 +64,7 @@ function MyPage({
 
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || '');
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   // 내가 만든 캡슐 조회
@@ -74,14 +77,14 @@ function MyPage({
         const total = res?.totalCount ?? null;
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
         setCapsuleTotal(total);
-        setMyRecords(list.map((c) => toRecord(c, user?.userId)));
+        setMyRecords(list.map((c) => toRecord(c, user?.userId, user)));
         setHasMoreCapsules(list.length >= 20 && (total == null || list.length < total));
       })
       .catch(() => {
         setMyRecords(myRecordsProp || []);
         setHasMoreCapsules(false);
       });
-  }, [tab]);
+  }, [tab, myRecordsVersion]);
 
   const loadMoreCapsules = useCallback(async () => {
     if (!hasMoreCapsules || capsuleLoadingRef.current) return;
@@ -93,7 +96,7 @@ function MyPage({
       const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
       if (res?.totalCount != null) setCapsuleTotal(res.totalCount);
       setMyRecords((prev) => {
-        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId))];
+        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId, user))];
         setHasMoreCapsules(list.length >= 20 && (total == null || merged.length < total));
         return merged;
       });
@@ -116,7 +119,7 @@ function MyPage({
         const total = res?.totalCount ?? null;
         const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
         if (total != null) setLikedTotal(total);
-        const records = list.map((c) => toRecord(c, user?.userId));
+        const records = list.map((c) => toRecord(c, user?.userId, user));
         setLikedFromApi(records);
         setHasMoreLiked(list.length >= 20 && (total == null || list.length < total));
         onLikedIdsLoaded?.(records.map((r) => r.id));
@@ -136,7 +139,7 @@ function MyPage({
       const total = res?.totalCount ?? likedTotal;
       const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
       if (res?.totalCount != null) setLikedTotal(res.totalCount);
-      const records = list.map((c) => toRecord(c, user?.userId));
+      const records = list.map((c) => toRecord(c, user?.userId, user));
       setLikedFromApi((prev) => {
         const merged = [...prev, ...records];
         setHasMoreLiked(list.length >= 20 && (total == null || merged.length < total));
@@ -159,6 +162,7 @@ function MyPage({
   const handleProfileImageFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setProfileImageFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setProfileImageUrl(ev.target.result);
     reader.readAsDataURL(file);
@@ -167,8 +171,18 @@ function MyPage({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await updateProfile({ nickname, profileImageUrl });
-      onUserUpdate?.({ ...user, ...updated, nickname, profileImageUrl });
+      let imageUrl = profileImageUrl;
+      if (profileImageFile) {
+        const { presignedUrl, fileUrl } = await getPresignedUrl({
+          fileName: profileImageFile.name,
+          contentType: profileImageFile.type,
+        });
+        await uploadFileToS3(presignedUrl, profileImageFile);
+        imageUrl = fileUrl;
+      }
+      const updated = await updateProfile({ nickname, profileImageUrl: imageUrl });
+      onUserUpdate?.({ ...user, ...updated, nickname, profileImageUrl: imageUrl });
+      setProfileImageFile(null);
       setEditing(false);
     } catch {
       alert('프로필 저장에 실패했어요.');

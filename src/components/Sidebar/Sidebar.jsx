@@ -16,7 +16,8 @@ function Sidebar({ page, setPage, isLoggedIn, user, requireLogin, onLogout }) {
   };
 
   const handleLogin = () => {
-    window.location.href = import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google';
+    window.location.href =
+      import.meta.env.VITE_GOOGLE_LOGIN_URL || '/oauth2/authorization/google';
   };
 
   return (
@@ -46,21 +47,20 @@ function Sidebar({ page, setPage, isLoggedIn, user, requireLogin, onLogout }) {
       </button>
 
       {isLoggedIn ? (
-        <>
-          <button className="authButton authButtonDesktop" onClick={toggleMypage}>
-            {user?.profileImageUrl ? (
-              <img src={user.profileImageUrl} alt="프로필" className="sidebarAvatar" />
-            ) : (
-              <UserRound size={17} />
-            )}
-            {user?.nickname || '내 정보'}
-          </button>
-
-          <button className="authButton authButtonMobile" onClick={onLogout}>
+        <button className="authButton sidebarProfile" onClick={toggleMypage}>
+          {user?.profileImageUrl ? (
+            <img
+              src={user.profileImageUrl}
+              alt="프로필"
+              className="sidebarAvatar"
+            />
+          ) : (
             <UserRound size={22} />
-            로그아웃
-          </button>
-        </>
+          )}
+          <span className="authButtonText">
+            {user?.nickname || '내 정보'}
+          </span>
+        </button>
       ) : (
         <button className="authButton" onClick={handleLogin}>
           <img src={googleIcon} alt="Google" className="googleIcon" />

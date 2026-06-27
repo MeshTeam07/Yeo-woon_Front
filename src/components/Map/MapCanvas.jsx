@@ -181,9 +181,7 @@ export default function MapCanvas({
 
               if (level > MAX_LEVEL) {
                 map.setLevel(MAX_LEVEL);
-                showToast(
-                  `현재 위치 주변 ${RADIUS_METER}m까지만 볼 수 있어요.`,
-                );
+                showToast('최대 축소 범위입니다. 더 이상 축소할 수 없어요.');
                 return;
               }
               onRadiusChangeRef.current?.(levelToRadius(level));

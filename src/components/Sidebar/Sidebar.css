@@ -137,6 +137,24 @@
   flex-shrink: 0;
 }
 
+.authButtonDesktop {
+  font-size: 14px;
+  padding: 12px 8px;
+  gap: 7px;
+  line-height: 1.2;
+  word-break: keep-all;
+}
+
+.authButtonDesktop .sidebarAvatar {
+  width: 30px;
+  height: 30px;
+}
+
+.authButtonDesktop svg {
+  width: 28px;
+  height: 28px;
+}
+
 .authButtonMobile {
   display: none;
 }
@@ -268,7 +286,88 @@
     display: none;
   }
 
-  .authButtonMobile {
-    display: grid;
+  .sidebarProfile {
+    flex-direction: row;
+    padding: 8px 6px;
+    gap: 3px;
   }
+
+  .sidebarProfile .sidebarAvatar {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sidebarProfile svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.authButton {
+  position: static;
+  margin-top: auto;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 8px;
+  border-radius: 20px;
+  background: var(--lavender-dark);
+  color: white;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(136, 119, 188, 0.24);
+  overflow: hidden;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.authButtonDesktop {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sidebarProfile {
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 8px;
+}
+
+.sidebarProfile .sidebarAvatar {
+  width: 30px;
+  height: 30px;
+}
+
+.sidebarProfile svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.authButtonText {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  white-space: normal;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.authButtonDesktop .sidebarAvatar {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.authButtonDesktop svg {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
 }

@@ -1,15 +1,20 @@
 import client from './client';
 import { RADIUS_METER } from '../constants';
 
-export function toRecord(c, myUserId) {
+export function toRecord(c, myUserId, currentUser) {
+  const isMe = !!(c.isOwner || c.author?.userId === myUserId || c.user?.id === myUserId);
   return {
     id: c.capsuleId ?? c.id,
-    owner:
-      c.isOwner || c.author?.userId === myUserId || c.user?.id === myUserId
-        ? 'me'
-        : 'other',
-    author: c.user?.nickname ?? c.author?.nickname ?? c.author ?? '',
-    authorAvatar: c.user?.profileImageUrl ?? c.author?.profileImageUrl ?? null,
+    owner: isMe ? 'me' : 'other',
+    author:
+      c.user?.nickname ??
+      c.author?.nickname ??
+      c.author ??
+      (isMe ? currentUser?.nickname ?? '' : ''),
+    authorAvatar:
+      c.user?.profileImageUrl ??
+      c.author?.profileImageUrl ??
+      (isMe ? currentUser?.profileImageUrl ?? null : null),
     address: c.address ?? c.place?.address ?? c.place?.label ?? '',
     lat: c.latitude ?? c.lat ?? c.place?.latitude,
     lng: c.longitude ?? c.lng ?? c.place?.longitude,
@@ -49,6 +54,12 @@ export const getCapsuleById = (capsuleId) =>
   client.get(`/capsules/${capsuleId}`);
 
 export const createCapsule = (data) => client.post('/capsules', data);
+
+export const updateCapsule = (capsuleId, data) =>
+  client.patch(`/capsules/${capsuleId}`, data);
+
+export const deleteCapsule = (capsuleId) =>
+  client.delete(`/capsules/${capsuleId}`);
 
 export const likeCapsule = (capsuleId) =>
   client.post(`/capsules/${capsuleId}/likes`);

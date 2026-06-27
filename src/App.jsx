@@ -8,10 +8,13 @@ import { getMe } from './api/user';
 import {
   getNearbyCapsules,
   createCapsule,
+  updateCapsule,
+  deleteCapsule,
   toRecord,
   likeCapsule,
   unlikeCapsule,
 } from './api/capsules';
+import { getPresignedUrl, uploadFileToS3 } from './api/uploads';
 import { loadLikes, saveLikes } from './utils/storage';
 import Sidebar from './components/Sidebar';
 import { MapCanvas } from './components/Map';
@@ -59,6 +62,7 @@ function App() {
   const [hasMoreNearby, setHasMoreNearby] = useState(false);
   const [nearbyTotal, setNearbyTotal] = useState(null);
   const nearbyLoadingRef = useRef(false);
+  const [myRecordsVersion, setMyRecordsVersion] = useState(0);
 
   // 앱 로드 시 로그인 상태 확인 (OAuth 콜백 URL 정리 포함)
   useEffect(() => {
@@ -90,8 +94,12 @@ function App() {
 
   // GPS 준비 → 주변 캡슐 조회 (initRadius: MapCanvas에서 계산한 초기 줌 반경)
   const handleLocationReady = useCallback(
-    async (lat, lng) => {
-      const queryRadius = 100;
+    async (lat, lng, addr, initRadius) => {
+      const queryRadius = initRadius ?? radius;
+      if (initRadius != null) setRadius(initRadius);
+      setPosition({ lat, lng });
+      setCurrentAddress(addr);
+      setNearbyOffset(0);
       try {
         const apiSort = sort === 'recommend' ? 'recommended' : sort;
         const res = await getNearbyCapsules({
@@ -105,7 +113,7 @@ function App() {
           ? res
           : (res?.capsules ?? res?.content ?? []);
         setNearbyTotal(total);
-        setRecords(list.map((c) => toRecord(c, user?.userId)));
+        setRecords(list.map((c) => toRecord(c, user?.userId, user)));
         setHasMoreNearby(
           list.length >= 20 && (total == null || list.length < total),
         );
@@ -140,7 +148,7 @@ function App() {
           ? res
           : (res?.capsules ?? res?.content ?? []);
         setNearbyTotal(total);
-        setRecords(list.map((c) => toRecord(c, user?.userId)));
+        setRecords(list.map((c) => toRecord(c, user?.userId, user)));
         setHasMoreNearby(
           list.length >= 20 && (total == null || list.length < total),
         );
@@ -175,7 +183,7 @@ function App() {
         : (res?.capsules ?? res?.content ?? []);
       if (res?.totalCount != null) setNearbyTotal(res.totalCount);
       setRecords((prev) => {
-        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId))];
+        const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId, user))];
         setHasMoreNearby(
           list.length >= 20 && (total == null || merged.length < total),
         );
@@ -270,19 +278,69 @@ function App() {
     }
   };
 
-  const deleteRecord = (id) => {
+  const deleteRecord = async (id) => {
+    try {
+      await deleteCapsule(id);
+    } catch {
+      showToast('삭제에 실패했어요. 다시 시도해주세요.');
+      return;
+    }
     setRecords((prev) => prev.filter((item) => item.id !== id));
     const nextLikes = likes.filter((l) => l !== id);
     setLikes(nextLikes);
     saveLikes(nextLikes);
+    setMyRecordsVersion((v) => v + 1);
     showToast('기록을 삭제했어요.');
   };
 
+  const uploadBlobImage = async (blobUrl) => {
+    const res = await fetch(blobUrl);
+    const blob = await res.blob();
+    const file = new File([blob], 'capsule-photo.jpg', { type: blob.type || 'image/jpeg' });
+    const { presignedUrl, fileUrl } = await getPresignedUrl({ fileName: file.name, contentType: file.type });
+    await uploadFileToS3(presignedUrl, file);
+    return fileUrl;
+  };
+
   const upsertRecord = async (record) => {
+    const song = record.songs?.[0] || {};
+    let photoUrl = record.image || null;
+    if (photoUrl?.startsWith('blob:')) {
+      try {
+        photoUrl = await uploadBlobImage(photoUrl);
+      } catch {
+        showToast('이미지 업로드에 실패했어요.');
+        return;
+      }
+    }
+
     if (record.id) {
-      setRecords((prev) =>
-        prev.map((item) => (item.id === record.id ? record : item)),
-      );
+      try {
+        const updated = await updateCapsule(record.id, {
+          place: {
+            latitude: record.lat ?? position?.lat,
+            longitude: record.lng ?? position?.lng,
+            address: record.address,
+          },
+          memo: record.message,
+          photoUrl,
+          song: {
+            provider: song.provider || 'ITUNES',
+            externalTrackId: song.externalTrackId || '',
+            title: song.title,
+            artist: song.artist,
+            albumCoverUrl: song.albumImage || '',
+            previewUrl: song.previewUrl || '',
+            musicUrl: song.musicUrl || '',
+          },
+        });
+        const updatedRecord = toRecord(updated, user?.userId, user);
+        setRecords((prev) => prev.map((item) => (item.id === updatedRecord.id ? updatedRecord : item)));
+      } catch {
+        showToast('수정에 실패했어요. 다시 시도해주세요.');
+        return;
+      }
+      setMyRecordsVersion((v) => v + 1);
       setEditing(null);
       setPage('mypage');
       showToast('기록을 수정했어요.');
@@ -290,7 +348,6 @@ function App() {
     }
 
     try {
-      const song = record.songs?.[0] || {};
       const created = await createCapsule({
         place: {
           latitude: position?.lat,
@@ -298,7 +355,7 @@ function App() {
           address: record.address,
         },
         memo: record.message,
-        photoUrl: record.image || null,
+        photoUrl,
         song: {
           provider: 'ITUNES',
           externalTrackId: song.externalTrackId || '',
@@ -309,8 +366,9 @@ function App() {
           musicUrl: song.musicUrl || '',
         },
       });
-      const newRecord = toRecord(created, user?.userId);
+      const newRecord = toRecord(created, user?.userId, user);
       setRecords((prev) => [newRecord, ...prev]);
+      setMyRecordsVersion((v) => v + 1);
       setEditing(null);
       setPage('mypage');
       showToast('새 여운을 남겼어요.');
@@ -402,6 +460,7 @@ function App() {
           autoOpenEdit={autoOpenProfileEdit}
           onEditOpened={() => setAutoOpenProfileEdit(false)}
           onLikedIdsLoaded={handleLikedIdsLoaded}
+          myRecordsVersion={myRecordsVersion}
         />
       )}
 
@@ -417,7 +476,6 @@ function App() {
       {editing && (
         <EditorModal
           initial={editing}
-          position={position}
           onClose={() => setEditing(null)}
           onSubmit={upsertRecord}
         />
