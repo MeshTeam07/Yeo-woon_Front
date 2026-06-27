@@ -1552,3 +1552,145 @@ button {
 .sidebar > button:not(.brandHome):not(.authButton).active {
   background: rgba(220, 214, 234, 0.78);
 }
+
+
+/* =========================
+   map_pin_icon.png 이미지 핀 적용
+   - src/assets/map_pin_icon.png 필요
+   ========================= */
+.mapPin {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 64px;
+  height: 86px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+  color: white;
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.mapPinImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.mapPinHeart {
+  position: relative;
+  z-index: 1;
+  color: white;
+  margin-top: -14px;
+  filter: drop-shadow(0 2px 4px rgba(34, 36, 58, 0.18));
+}
+
+.mapPinGroup:hover .mapPin {
+  transform: translateY(-8px) scale(1.05);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 18px 28px rgba(136, 119, 188, 0.28));
+}
+
+.mapPin.liked {
+  background: transparent;
+  color: white;
+}
+
+.mapPin.liked .mapPinHeart {
+  fill: currentColor;
+  color: var(--coral);
+}
+
+
+/* 모바일 하단바 최종 정리 */
+@media (max-width: 640px) {
+  .mapPin {
+    width: 56px;
+    height: 76px;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .mapPinHeart {
+    margin-top: -12px;
+  }
+
+  .authButton {
+    position: static;
+    top: auto;
+    right: auto;
+    margin-top: 0;
+    flex: 1 1 0;
+    width: auto;
+    height: 52px;
+    min-width: 0;
+    padding: 8px 4px;
+    border-radius: 16px;
+    font-size: 11px;
+    font-weight: 900;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+
+  .authButton:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .brandHome {
+    flex: 1.25 1 0;
+    width: auto;
+    height: 52px;
+    min-width: 64px;
+    margin: 0;
+    padding: 5px 3px;
+    display: grid;
+    grid-template-rows: 27px 14px;
+    place-items: center;
+    gap: 2px;
+    border-right: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: visible;
+  }
+
+  .brandHome img {
+    width: 27px;
+    height: 27px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    object-fit: contain;
+  }
+
+  .brandHome h1 {
+    width: 100%;
+    min-width: 42px;
+    margin: 0;
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: -0.4px;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: visible;
+  }
+
+  .brandHome:hover {
+    transform: none;
+    filter: none;
+  }
+}

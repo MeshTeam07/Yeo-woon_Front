@@ -1,7 +1,11 @@
 import { Heart } from 'lucide-react';
+import mapPinIcon from '../../assets/map_pin_icon.png';
 
 function MapPin({ record, index, liked, onLike, onSelect }) {
   const song = record.songs?.[0];
+
+  const heartFill = liked ? 'currentColor' : 'none';
+  const heartStrokeWidth = liked ? 0 : 2.5;
 
   return (
     <div className={`mapPinGroup pin${index}`}>
@@ -10,10 +14,13 @@ function MapPin({ record, index, liked, onLike, onSelect }) {
         onClick={() => onSelect(record)}
         title={record.message}
       >
+        <img src={mapPinIcon} alt="" className="mapPinImage" />
+
         <Heart
+          className="mapPinHeart"
           size={22}
-          fill={liked ? 'currentColor' : 'none'}
-          strokeWidth={liked ? 0 : 2.5}
+          fill={heartFill}
+          strokeWidth={heartStrokeWidth}
         />
       </button>
 
@@ -32,10 +39,11 @@ function MapPin({ record, index, liked, onLike, onSelect }) {
             onLike(record.id);
           }}
           aria-label="좋아요"
+          title={liked ? '좋아요 취소' : '좋아요'}
         >
           <Heart
             size={15}
-            fill={liked ? 'currentColor' : 'none'}
+            fill={heartFill}
             strokeWidth={liked ? 0 : 2.4}
           />
         </button>
