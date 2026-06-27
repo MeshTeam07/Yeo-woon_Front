@@ -55,7 +55,6 @@ function App() {
   const [records, setRecords] = useState([]);
   const [likes, setLikes] = useState(loadLikes);
   const [position, setPosition] = useState(null);
-  const [radius, setRadius] = useState(RADIUS_METER);
   const [currentAddress, setCurrentAddress] = useState('');
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -95,11 +94,9 @@ function App() {
       });
   }, []);
 
-  // GPS 준비 → 주변 캡슐 조회 (initRadius: MapCanvas에서 계산한 초기 줌 반경)
+  // GPS 준비 → 주변 캡슐 조회 (반경 항상 100m 고정)
   const handleLocationReady = useCallback(
-    async (lat, lng, addr, initRadius) => {
-      const queryRadius = initRadius ?? radius;
-      if (initRadius != null) setRadius(initRadius);
+    async (lat, lng, addr) => {
       setPosition({ lat, lng });
       setCurrentAddress(addr);
       setNearbyOffset(0);
@@ -108,7 +105,7 @@ function App() {
         const res = await getNearbyCapsules({
           latitude: lat,
           longitude: lng,
-          radius: queryRadius,
+          radius: RADIUS_METER,
           sort: apiSort,
         });
         const total = res?.totalCount ?? null;
@@ -127,13 +124,12 @@ function App() {
         // 네트워크 에러 시 빈 목록 유지
       }
     },
-    [sort, user, radius],
+    [sort, user],
   );
 
-  // 지도 줌 변경 → 반경으로 재조회
+  // 지도 줌 변경 (반경 항상 100m 고정, 재조회 없음)
   const handleRadiusChange = useCallback(
-    async (newRadius) => {
-      setRadius(newRadius);
+    async () => {
       setNearbyOffset(0);
       nearbyLoadingRef.current = false;
       if (!position) return;
@@ -142,7 +138,7 @@ function App() {
         const res = await getNearbyCapsules({
           latitude: position.lat,
           longitude: position.lng,
-          radius: newRadius,
+          radius: RADIUS_METER,
           sort: apiSort,
           offset: 0,
         });
@@ -175,7 +171,7 @@ function App() {
       const res = await getNearbyCapsules({
         latitude: position.lat,
         longitude: position.lng,
-        radius,
+        radius: RADIUS_METER,
         sort: apiSort,
         limit: 20,
         offset: nextOffset,
@@ -198,7 +194,7 @@ function App() {
     } finally {
       nearbyLoadingRef.current = false;
     }
-  }, [position, radius, sort, nearbyOffset, hasMoreNearby, nearbyTotal, user]);
+  }, [position, sort, nearbyOffset, hasMoreNearby, nearbyTotal, user]);
 
   const nearbyRecords = useMemo(() => {
     return [...records].sort((a, b) => {
@@ -216,14 +212,14 @@ function App() {
       if (sort !== 'seasonal') setSeasonalRecords([]);
       return;
     }
-    getSeasonalSongs({ latitude: position.lat, longitude: position.lng, radius, season })
+    getSeasonalSongs({ latitude: position.lat, longitude: position.lng, radius: RADIUS_METER, season })
       .then((res) => {
         const seasons = res?.seasons ?? [];
         const target = seasons.find((s) => s.season === season);
         setSeasonalRecords(target?.songs ?? []);
       })
       .catch(() => setSeasonalRecords([]));
-  }, [sort, season, position, radius]);
+  }, [sort, season, position]);
 
   // 좋아요 탭에서 API로 로드한 항목 ID를 likes state에 병합
   const handleLikedIdsLoaded = useCallback((ids) => {
@@ -466,7 +462,7 @@ function App() {
             season ? (
               <>
                 <div className="countText">
-                  반경 {radius}m · {seasonalRecords.length}개 노래
+                  반경 {RADIUS_METER}m · {seasonalRecords.length}개 노래
                 </div>
                 <div className="seasonalSongList">
                   {seasonalRecords.length === 0 && (
@@ -485,7 +481,7 @@ function App() {
           ) : (
             <>
               <div className="countText">
-                반경 {radius}m · 총 {nearbyTotal ?? nearbyRecords.length}개
+                반경 {RADIUS_METER}m · 총 {nearbyTotal ?? nearbyRecords.length}개
               </div>
               <RecordList
                 records={nearbyRecords}
