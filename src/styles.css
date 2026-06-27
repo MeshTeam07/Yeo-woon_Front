@@ -87,11 +87,14 @@ button {
   width: 100%;
   display: grid;
   place-items: center;
-  gap: 8px;
+  gap: 2px;
   margin-bottom: 14px;
   padding: 0;
   color: var(--lavender-dark);
   background: transparent;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
 }
 
 .brandHome img {
@@ -103,15 +106,14 @@ button {
   background: rgba(220, 214, 234, 0.28);
   border: 1px solid rgba(189, 182, 216, 0.5);
   box-shadow: 0 14px 28px rgba(136, 119, 188, 0.14);
-  transition: transform 0.2s ease;
 }
 
 .brandHome h1 {
-  width: 74px;
+  width: 55px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: -px 0 0;
+  margin: -1px 0 0;
   font-size: 29px;
   line-height: 1;
   letter-spacing: -2px;
@@ -119,8 +121,13 @@ button {
   font-weight: 900;
 }
 
-.brandHome:hover img {
+.brandHome:hover {
   transform: translateY(-2px);
+  filter: brightness(1.02);
+}
+
+.brandHome:hover img {
+  transform: none;
 }
 
 .sidebar > button:not(.brandHome) {
