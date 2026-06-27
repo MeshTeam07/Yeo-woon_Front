@@ -39,7 +39,7 @@
 }
 
 .brandHome h1 {
-  width: 55px;
+  width: 45px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -57,8 +57,8 @@
 }
 
 .sidebar button svg {
-  width: 28px;
-  height: 28px;
+  width: 35px;
+  height: 35px;
 }
 
 .sidebar > button:not(.brandHome):not(.authButton) {

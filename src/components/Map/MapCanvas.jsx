@@ -57,8 +57,22 @@ export default function MapCanvas() {
   const mapRef = useRef(null);
   const centerRef = useRef(null);
   const isReturningRef = useRef(false);
+  const toastTimerRef = useRef(null);
 
   const [message, setMessage] = useState('현재 위치를 확인하는 중입니다...');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (text) => {
+    setToastMessage(text);
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setToastMessage('');
+    }, 1800);
+  };
 
   useEffect(() => {
     let marker = null;
@@ -87,7 +101,7 @@ export default function MapCanvas() {
 
             const map = new kakao.maps.Map(mapContainerRef.current, {
               center: currentLatLng,
-              level: 5,
+              level: 4,
             });
 
             mapRef.current = map;
@@ -139,6 +153,7 @@ export default function MapCanvas() {
               // 500m 서비스라 너무 넓게 못 보게 제한
               if (level > 4) {
                 map.setLevel(4);
+                showToast('현재 위치 주변 500m까지만 볼 수 있어요.');
               }
             });
 
@@ -167,6 +182,10 @@ export default function MapCanvas() {
     return () => {
       if (marker) marker.setMap(null);
       if (circle) circle.setMap(null);
+
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
     };
   }, []);
 
@@ -175,6 +194,8 @@ export default function MapCanvas() {
       <div ref={mapContainerRef} className="kakaoMap" />
 
       {message && <div className="mapMessage">{message}</div>}
+
+      {toastMessage && <div className="mapToast">{toastMessage}</div>}
     </div>
   );
 }
