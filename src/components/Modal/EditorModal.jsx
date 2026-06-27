@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
 import { searchSongs } from '../../api/songs';
 import './Modal.css';
 
@@ -27,16 +27,24 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
     ],
   });
 
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
   const [songQuery, setSongQuery] = useState(form.songs[0]?.title || '');
   const [songResults, setSongResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const debounceRef = useRef(null);
 
+  const handleSongQueryChange = (e) => {
+    const val = e.target.value;
+    setSongQuery(val);
+    if (!val.trim()) setSongResults([]);
+  };
+
   useEffect(() => {
-    if (!songQuery.trim()) {
-      setSongResults([]);
-      return;
-    }
+    if (!songQuery.trim()) return;
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
@@ -54,6 +62,49 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
     }, 500);
     return () => clearTimeout(debounceRef.current);
   }, [songQuery]);
+
+  // 카메라 스트림이 열리면 video 엘리먼트에 연결
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream]);
+
+  const openCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false,
+      });
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+    } catch {
+      alert('카메라 권한이 필요합니다.');
+    }
+  };
+
+  const closeCamera = () => {
+    cameraStream?.getTracks().forEach((t) => t.stop());
+    setCameraStream(null);
+    setIsCameraOpen(false);
+  };
+
+  const takePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      setForm((prev) => ({ ...prev, image: url }));
+      closeCamera();
+    }, 'image/jpeg');
+  };
 
   const selectSong = (song) => {
     const mapped = {
@@ -118,20 +169,17 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
 
         <label>대표 이미지 선택</label>
         <div className="uploadButtons">
-          <label className="uploadChoice">
+          <button type="button" className="uploadChoice" onClick={openCamera}>
+            <Camera size={18} />
             카메라로 촬영
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageFile}
-            />
-          </label>
+          </button>
+
           <label className="uploadChoice">
             앨범/드라이브 선택
             <input type="file" accept="image/*" onChange={handleImageFile} />
           </label>
         </div>
+
         {form.image && (
           <img
             className="imagePreview"
@@ -144,7 +192,7 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
         <div className="songSearch">
           <input
             value={songQuery}
-            onChange={(e) => setSongQuery(e.target.value)}
+            onChange={handleSongQueryChange}
             placeholder="노래 제목 또는 가수 검색"
           />
           {searching && <div className="songSearchHint">검색 중...</div>}
@@ -189,6 +237,39 @@ function EditorModal({ initial, position, onClose, onSubmit }) {
           저장하기
         </button>
       </form>
+
+      {isCameraOpen && (
+        <div className="cameraBackdrop">
+          <div className="cameraModal">
+            <button
+              type="button"
+              className="cameraClose"
+              onClick={closeCamera}
+              aria-label="카메라 닫기"
+            >
+              <X />
+            </button>
+
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="cameraPreview"
+            />
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+            <div className="cameraActions">
+              <button type="button" onClick={closeCamera}>
+                취소
+              </button>
+              <button type="button" onClick={takePhoto}>
+                촬영하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
