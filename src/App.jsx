@@ -309,6 +309,7 @@ function App() {
         isLoggedIn={isLoggedIn}
         user={user}
         requireLogin={requireLogin}
+        onLogout={handleLogout}
       />
 
       <main className="mapArea">

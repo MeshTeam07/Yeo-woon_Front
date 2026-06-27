@@ -3,7 +3,7 @@ import yeowoonLogo from '../../assets/main_icon_yeowoon.png';
 import googleIcon from '../../assets/google_icon.png';
 import './Sidebar.css';
 
-function Sidebar({ page, setPage, isLoggedIn, user, requireLogin }) {
+function Sidebar({ page, setPage, isLoggedIn, user, requireLogin, onLogout }) {
   const goHome = () => setPage('map');
 
   const toggleNearby = () => {
@@ -46,14 +46,21 @@ function Sidebar({ page, setPage, isLoggedIn, user, requireLogin }) {
       </button>
 
       {isLoggedIn ? (
-        <button className="authButton" onClick={toggleMypage}>
-          {user?.profileImageUrl ? (
-            <img src={user.profileImageUrl} alt="프로필" className="sidebarAvatar" />
-          ) : (
-            <UserRound size={17} />
-          )}
-          {user?.nickname || '내 정보'}
-        </button>
+        <>
+          <button className="authButton authButtonDesktop" onClick={toggleMypage}>
+            {user?.profileImageUrl ? (
+              <img src={user.profileImageUrl} alt="프로필" className="sidebarAvatar" />
+            ) : (
+              <UserRound size={17} />
+            )}
+            {user?.nickname || '내 정보'}
+          </button>
+
+          <button className="authButton authButtonMobile" onClick={onLogout}>
+            <UserRound size={22} />
+            로그아웃
+          </button>
+        </>
       ) : (
         <button className="authButton" onClick={handleLogin}>
           <img src={googleIcon} alt="Google" className="googleIcon" />
