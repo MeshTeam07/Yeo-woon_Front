@@ -6,8 +6,11 @@ import { logout as apiLogout } from './api/auth';
 import { saveToken, clearToken } from './api/client';
 import { getMe } from './api/user';
 import {
-  getNearbyCapsules, createCapsule, toRecord,
-  likeCapsule, unlikeCapsule,
+  getNearbyCapsules,
+  createCapsule,
+  toRecord,
+  likeCapsule,
+  unlikeCapsule,
 } from './api/capsules';
 import { loadLikes, saveLikes } from './utils/storage';
 import Sidebar from './components/Sidebar';
@@ -27,7 +30,9 @@ function Sentinel({ onVisible }) {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) cbRef.current?.(); },
+      ([e]) => {
+        if (e.isIntersecting) cbRef.current?.();
+      },
       { threshold: 0.1 },
     );
     obs.observe(el);
@@ -85,23 +90,26 @@ function App() {
 
   // GPS 준비 → 주변 캡슐 조회 (initRadius: MapCanvas에서 계산한 초기 줌 반경)
   const handleLocationReady = useCallback(
-    async (lat, lng, addr, initRadius) => {
-      const queryRadius = initRadius ?? radius;
-      if (initRadius != null) setRadius(initRadius);
-      setPosition({ lat, lng });
-      setCurrentAddress(addr);
-      setNearbyOffset(0);
+    async (lat, lng) => {
+      const queryRadius = 100;
       try {
         const apiSort = sort === 'recommend' ? 'recommended' : sort;
         const res = await getNearbyCapsules({
-          latitude: lat, longitude: lng, radius: queryRadius, sort: apiSort,
+          latitude: lat,
+          longitude: lng,
+          radius: queryRadius,
+          sort: apiSort,
         });
         const total = res?.totalCount ?? null;
-        const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        const list = Array.isArray(res)
+          ? res
+          : (res?.capsules ?? res?.content ?? []);
         setNearbyTotal(total);
         setRecords(list.map((c) => toRecord(c, user?.userId)));
-        setHasMoreNearby(list.length >= 20 && (total == null || list.length < total));
-        const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
+        setHasMoreNearby(
+          list.length >= 20 && (total == null || list.length < total),
+        );
+        const likedIds = list.filter((r) => r.isLiked).map((r) => r.id);
         setLikes(likedIds);
         saveLikes(likedIds);
       } catch {
@@ -121,15 +129,22 @@ function App() {
       try {
         const apiSort = sort === 'recommend' ? 'recommended' : sort;
         const res = await getNearbyCapsules({
-          latitude: position.lat, longitude: position.lng,
-          radius: newRadius, sort: apiSort, offset: 0,
+          latitude: position.lat,
+          longitude: position.lng,
+          radius: newRadius,
+          sort: apiSort,
+          offset: 0,
         });
         const total = res?.totalCount ?? null;
-        const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+        const list = Array.isArray(res)
+          ? res
+          : (res?.capsules ?? res?.content ?? []);
         setNearbyTotal(total);
         setRecords(list.map((c) => toRecord(c, user?.userId)));
-        setHasMoreNearby(list.length >= 20 && (total == null || list.length < total));
-        const likedIds = list.filter((r) => r.likedByMe).map((r) => r.id);
+        setHasMoreNearby(
+          list.length >= 20 && (total == null || list.length < total),
+        );
+        const likedIds = list.filter((r) => r.isLiked).map((r) => r.id);
         setLikes(likedIds);
         saveLikes(likedIds);
       } catch {
@@ -147,15 +162,23 @@ function App() {
     try {
       const apiSort = sort === 'recommend' ? 'recommended' : sort;
       const res = await getNearbyCapsules({
-        latitude: position.lat, longitude: position.lng,
-        radius, sort: apiSort, limit: 20, offset: nextOffset,
+        latitude: position.lat,
+        longitude: position.lng,
+        radius,
+        sort: apiSort,
+        limit: 20,
+        offset: nextOffset,
       });
       const total = res?.totalCount ?? nearbyTotal;
-      const list = Array.isArray(res) ? res : (res?.capsules ?? res?.content ?? []);
+      const list = Array.isArray(res)
+        ? res
+        : (res?.capsules ?? res?.content ?? []);
       if (res?.totalCount != null) setNearbyTotal(res.totalCount);
       setRecords((prev) => {
         const merged = [...prev, ...list.map((c) => toRecord(c, user?.userId))];
-        setHasMoreNearby(list.length >= 20 && (total == null || merged.length < total));
+        setHasMoreNearby(
+          list.length >= 20 && (total == null || merged.length < total),
+        );
         return merged;
       });
       setNearbyOffset(nextOffset);
@@ -211,11 +234,15 @@ function App() {
     saveLikes(nextLikes);
     setRecords((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, likes: Math.max(0, item.likes + delta) } : item,
+        item.id === id
+          ? { ...item, likes: Math.max(0, item.likes + delta) }
+          : item,
       ),
     );
     setSelected((prev) =>
-      prev?.id === id ? { ...prev, likes: Math.max(0, prev.likes + delta) } : prev,
+      prev?.id === id
+        ? { ...prev, likes: Math.max(0, prev.likes + delta) }
+        : prev,
     );
 
     try {
@@ -230,11 +257,15 @@ function App() {
       saveLikes(likes);
       setRecords((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, likes: Math.max(0, item.likes - delta) } : item,
+          item.id === id
+            ? { ...item, likes: Math.max(0, item.likes - delta) }
+            : item,
         ),
       );
       setSelected((prev) =>
-        prev?.id === id ? { ...prev, likes: Math.max(0, prev.likes - delta) } : prev,
+        prev?.id === id
+          ? { ...prev, likes: Math.max(0, prev.likes - delta) }
+          : prev,
       );
     }
   };
@@ -249,7 +280,9 @@ function App() {
 
   const upsertRecord = async (record) => {
     if (record.id) {
-      setRecords((prev) => prev.map((item) => (item.id === record.id ? record : item)));
+      setRecords((prev) =>
+        prev.map((item) => (item.id === record.id ? record : item)),
+      );
       setEditing(null);
       setPage('mypage');
       showToast('기록을 수정했어요.');
@@ -324,7 +357,10 @@ function App() {
 
         <button
           className={`writeButton ${!isLoggedIn ? 'locked' : ''}`}
-          onClick={() => requireLogin() && setEditing({ songs: [{}], address: currentAddress })}
+          onClick={() =>
+            requireLogin() &&
+            setEditing({ songs: [{}], address: currentAddress })
+          }
         >
           {isLoggedIn ? <Plus size={26} /> : <Lock size={22} />}
           순간 남기기
