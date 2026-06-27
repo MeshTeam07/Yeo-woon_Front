@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { UserRound } from 'lucide-react';
 import { getMyCapsules, getLikedCapsules, getLikedCount, updateProfile } from '../../api/user';
 import { toRecord } from '../../api/capsules';
-import { getPresignedUrl, uploadFileToS3 } from '../../api/uploads';
+import { uploadImage } from '../../api/uploads';
 import { Panel } from '../Panel';
 import { RecordList } from '../Record';
 
@@ -173,18 +173,15 @@ function MyPage({
     try {
       let imageUrl = profileImageUrl;
       if (profileImageFile) {
-        const { presignedUrl, fileUrl } = await getPresignedUrl({
-          fileName: profileImageFile.name,
-          contentType: profileImageFile.type,
-        });
-        await uploadFileToS3(presignedUrl, profileImageFile);
+        const { fileUrl } = await uploadImage(profileImageFile);
         imageUrl = fileUrl;
       }
       const updated = await updateProfile({ nickname, profileImageUrl: imageUrl });
       onUserUpdate?.({ ...user, ...updated, nickname, profileImageUrl: imageUrl });
       setProfileImageFile(null);
       setEditing(false);
-    } catch {
+    } catch (e) {
+      console.error('프로필 저장 실패:', e);
       alert('프로필 저장에 실패했어요.');
     } finally {
       setSaving(false);

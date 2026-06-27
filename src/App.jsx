@@ -15,7 +15,7 @@ import {
   unlikeCapsule,
   getSeasonalSongs,
 } from './api/capsules';
-import { getPresignedUrl, uploadFileToS3 } from './api/uploads';
+import { uploadImage } from './api/uploads';
 import { loadLikes, saveLikes } from './utils/storage';
 import Sidebar from './components/Sidebar';
 import { MapCanvas } from './components/Map';
@@ -311,12 +311,7 @@ function App() {
     const res = await fetch(blobUrl);
     const blob = await res.blob();
     const file = new File([blob], 'capsule-photo.jpg', { type: blob.type || 'image/jpeg' });
-    const result = await getPresignedUrl({ fileName: file.name, contentType: file.type });
-    console.log('[uploadBlobImage] presigned URL response:', result);
-    const presignedUrl = result?.presignedUrl ?? result?.uploadUrl ?? result?.url;
-    const fileUrl = result?.fileUrl ?? result?.publicUrl ?? result?.objectUrl ?? result?.imageUrl;
-    if (!presignedUrl || !fileUrl) throw new Error(`presigned URL 응답 필드 없음: ${JSON.stringify(result)}`);
-    await uploadFileToS3(presignedUrl, file);
+    const { fileUrl } = await uploadImage(file);
     return fileUrl;
   };
 
@@ -326,7 +321,8 @@ function App() {
     if (photoUrl?.startsWith('blob:')) {
       try {
         photoUrl = await uploadBlobImage(photoUrl);
-      } catch {
+      } catch (e) {
+        console.error('이미지 업로드 실패:', e);
         showToast('이미지 업로드에 실패했어요.');
         return;
       }
