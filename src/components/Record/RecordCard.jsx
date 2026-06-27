@@ -1,5 +1,6 @@
 import { Heart, MapPin, Pencil, Trash2 } from 'lucide-react';
 import { formatDistance, formatTime } from '../../utils/format';
+import './RecordCard.css';
 
 function RecordCard({ record, liked, onLike, onSelect, editable, onEdit, onDelete }) {
   const cover = record.image || record.songs?.[0]?.albumImage;

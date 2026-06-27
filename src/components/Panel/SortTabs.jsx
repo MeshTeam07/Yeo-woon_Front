@@ -1,3 +1,5 @@
+import './SortTabs.css';
+
 function SortTabs({ value, onChange }) {
   const tabs = [
     ['distance', '거리순'],

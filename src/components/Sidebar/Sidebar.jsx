@@ -1,5 +1,6 @@
 import { Lock, LogIn, LogOut, Music2, UserRound } from 'lucide-react';
 import yeowoonLogo from '../../assets/main_icon_yeowoon.png';
+import './Sidebar.css';
 
 function AuthButton({ isLoggedIn, setAuth }) {
   return (

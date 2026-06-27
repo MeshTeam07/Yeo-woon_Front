@@ -1,0 +1,146 @@
+.mapPinGroup {
+  position: absolute;
+  z-index: 2;
+}
+
+.mapPinGroup.pin1 { left: 53%; top: 24%; }
+.mapPinGroup.pin2 { left: 65%; top: 37%; }
+.mapPinGroup.pin3 { left: 19%; top: 20%; }
+.mapPinGroup.pin4 { left: 15%; top: 70%; }
+.mapPinGroup.pin5 { left: 35%; top: 77%; }
+
+.mapPin {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--lavender), var(--lavender-dark));
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 14px 30px rgba(136, 119, 188, 0.34);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    background 0.22s ease;
+}
+
+.mapPinGroup:hover .mapPin {
+  transform: translateY(-8px) scale(1.05);
+  background: white;
+  color: var(--coral);
+  border-color: rgba(254, 135, 132, 0.65);
+  box-shadow: 0 22px 46px rgba(254, 135, 132, 0.36);
+}
+
+.mapPin.liked {
+  background: linear-gradient(135deg, var(--coral), #ff9c99);
+  color: white;
+}
+
+.mapPin.liked svg {
+  fill: currentColor;
+}
+
+.mapMiniCard {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(8px);
+  width: 190px;
+  display: grid;
+  grid-template-columns: 46px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(189, 182, 216, 0.72);
+  box-shadow: 0 18px 40px rgba(34, 36, 58, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mapPinGroup:hover .mapMiniCard {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.mapMiniCard img {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: var(--gray);
+}
+
+.mapMiniCard strong {
+  display: block;
+  font-size: 13px;
+  line-height: 1.25;
+  color: var(--navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mapMiniCard span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #7b7890;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.miniHeart {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(220, 214, 234, 0.45);
+  color: var(--lavender-dark);
+}
+
+.miniHeart.liked {
+  background: rgba(254, 135, 132, 0.14);
+  color: var(--coral);
+}
+
+.miniHeart.liked svg {
+  fill: currentColor;
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .mapPinGroup.pin1 { left: 55%; top: 27%; }
+  .mapPinGroup.pin2 { left: 70%; top: 39%; }
+  .mapPinGroup.pin3 { left: 14%; top: 24%; }
+  .mapPinGroup.pin4 { left: 12%; top: 67%; }
+  .mapPinGroup.pin5 { left: 40%; top: 74%; }
+
+  .mapPin {
+    width: 48px;
+    height: 48px;
+  }
+
+  .mapMiniCard {
+    width: 172px;
+    grid-template-columns: 40px 1fr 26px;
+  }
+
+  .mapMiniCard img {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -1,0 +1,174 @@
+.recordList {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 30px;
+}
+
+.recordCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(189, 182, 216, 0.78);
+  border-radius: 24px;
+  padding: 12px;
+  box-shadow: 0 12px 26px rgba(136, 119, 188, 0.13);
+  transition:
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.recordCard > img {
+  width: 112px;
+  height: 126px;
+  object-fit: cover;
+  border-radius: 18px;
+  background: var(--gray);
+}
+
+.cardBody {
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #80859a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.recordCard h3 {
+  margin: 9px 0 4px;
+  font-size: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recordCard p {
+  height: 40px;
+  margin: 0 0 11px;
+  color: #585d72;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #85899c;
+}
+
+.heart {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #a0a4b5;
+}
+
+.heart.liked {
+  color: var(--coral) !important;
+}
+
+.heart.liked svg {
+  fill: currentColor;
+}
+
+.cardMenu {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  display: flex;
+  gap: 4px;
+  background: white;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(34, 36, 58, 0.12);
+}
+
+.cardMenu button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+
+.empty {
+  padding: 70px 20px;
+  text-align: center;
+  color: #888da0;
+  background: white;
+  border-radius: 22px;
+}
+
+.recordCard:hover {
+  background: rgba(248, 245, 255, 0.98);
+  border-color: rgba(254, 135, 132, 0.46);
+  box-shadow: 0 18px 38px rgba(254, 135, 132, 0.16);
+}
+
+.recordCard:hover h3 {
+  color: var(--lavender-dark);
+}
+
+.recordCard:hover .meta {
+  color: var(--coral);
+}
+
+/* =========================
+   Tablet
+   ========================= */
+@media (max-width: 900px) {
+  .recordCard {
+    grid-template-columns: 96px 1fr;
+  }
+
+  .recordCard > img {
+    width: 96px;
+    height: 116px;
+  }
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .recordList {
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
+  .recordCard {
+    grid-template-columns: 82px 1fr;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .recordCard > img {
+    width: 82px;
+    height: 98px;
+    border-radius: 16px;
+  }
+
+  .recordCard h3 {
+    margin-top: 7px;
+    font-size: 16px;
+  }
+
+  .recordCard p {
+    height: 36px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .cardFooter {
+    font-size: 12px;
+  }
+}

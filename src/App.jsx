@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Lock, Plus } from 'lucide-react';
-import './styles.css';
 
 import { AUTH_KEY, loadLikes, loadRecords, saveLikes, saveRecords } from './utils/storage';
 import Sidebar from './components/Sidebar';
