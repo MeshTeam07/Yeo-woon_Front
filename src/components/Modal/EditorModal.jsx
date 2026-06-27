@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Camera, X } from 'lucide-react';
 import './Modal.css';
 
 function EditorModal({ initial, onClose, onSubmit }) {
@@ -24,6 +24,11 @@ function EditorModal({ initial, onClose, onSubmit }) {
     ],
   });
 
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+
   const updateSong = (field, value) => {
     const nextSong = {
       ...form.songs[0],
@@ -46,7 +51,79 @@ function EditorModal({ initial, onClose, onSubmit }) {
       ...form,
       image: imageUrl,
     });
+
+    e.target.value = '';
   };
+
+  const stopCameraStream = (stream) => {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => track.stop());
+  };
+
+  const closeCamera = () => {
+    stopCameraStream(cameraStream);
+    setCameraStream(null);
+    setIsCameraOpen(false);
+  };
+
+  const openCamera = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      alert('이 브라우저에서는 카메라 촬영을 지원하지 않아요.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+        },
+        audio: false,
+      });
+
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+    } catch (error) {
+      console.error(error);
+      alert('카메라를 열 수 없어요. 브라우저 권한을 허용했는지 확인해주세요.');
+    }
+  };
+
+  const takePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) return;
+
+    const width = video.videoWidth || 1280;
+    const height = video.videoHeight || 720;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, width, height);
+
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+    setForm((prev) => ({
+      ...prev,
+      image: imageDataUrl,
+    }));
+
+    closeCamera();
+  };
+
+  useEffect(() => {
+    if (!isCameraOpen || !cameraStream || !videoRef.current) return;
+
+    videoRef.current.srcObject = cameraStream;
+  }, [isCameraOpen, cameraStream]);
+
+  useEffect(() => {
+    return () => {
+      stopCameraStream(cameraStream);
+    };
+  }, [cameraStream]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -103,15 +180,10 @@ function EditorModal({ initial, onClose, onSubmit }) {
 
         <label>대표 이미지 선택</label>
         <div className="uploadButtons">
-          <label className="uploadChoice">
+          <button type="button" className="uploadChoice" onClick={openCamera}>
+            <Camera size={18} />
             카메라로 촬영
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageFile}
-            />
-          </label>
+          </button>
 
           <label className="uploadChoice">
             앨범/드라이브 선택
@@ -152,6 +224,40 @@ function EditorModal({ initial, onClose, onSubmit }) {
           저장하기
         </button>
       </form>
+
+      {isCameraOpen && (
+        <div className="cameraBackdrop">
+          <div className="cameraModal">
+            <button
+              type="button"
+              className="cameraClose"
+              onClick={closeCamera}
+              aria-label="카메라 닫기"
+            >
+              <X />
+            </button>
+
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="cameraPreview"
+            />
+
+            <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+            <div className="cameraActions">
+              <button type="button" onClick={closeCamera}>
+                취소
+              </button>
+              <button type="button" onClick={takePhoto}>
+                촬영하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -332,3 +332,87 @@
     grid-column: auto;
   }
 }
+/* =========================
+   Camera capture modal
+   ========================= */
+.cameraBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(34, 36, 58, 0.52);
+}
+
+.cameraModal {
+  position: relative;
+  width: min(560px, 94vw);
+  padding: 18px;
+  border-radius: 28px;
+  background: white;
+  box-shadow: 0 30px 80px rgba(34, 36, 58, 0.28);
+}
+
+.cameraClose {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(238, 233, 248, 0.92);
+  color: var(--lavender-dark);
+}
+
+.cameraPreview {
+  width: 100%;
+  max-height: 62vh;
+  display: block;
+  border-radius: 22px;
+  object-fit: cover;
+  background: #111;
+}
+
+.cameraActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cameraActions button {
+  padding: 14px 12px;
+  border-radius: 16px;
+  font-weight: 900;
+  background: rgba(220, 214, 234, 0.42);
+  color: var(--lavender-dark);
+}
+
+.cameraActions button:last-child {
+  background: var(--lavender-dark);
+  color: white;
+}
+
+.uploadChoice {
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .cameraBackdrop {
+    padding: 12px;
+    align-items: end;
+  }
+
+  .cameraModal {
+    width: 100%;
+    border-radius: 28px 28px 0 0;
+  }
+
+  .cameraPreview {
+    max-height: 58vh;
+  }
+}
