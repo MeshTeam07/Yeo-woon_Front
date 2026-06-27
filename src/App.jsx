@@ -297,7 +297,11 @@ function App() {
     const res = await fetch(blobUrl);
     const blob = await res.blob();
     const file = new File([blob], 'capsule-photo.jpg', { type: blob.type || 'image/jpeg' });
-    const { presignedUrl, fileUrl } = await getPresignedUrl({ fileName: file.name, contentType: file.type });
+    const result = await getPresignedUrl({ fileName: file.name, contentType: file.type });
+    console.log('[uploadBlobImage] presigned URL response:', result);
+    const presignedUrl = result?.presignedUrl ?? result?.uploadUrl ?? result?.url;
+    const fileUrl = result?.fileUrl ?? result?.publicUrl ?? result?.objectUrl ?? result?.imageUrl;
+    if (!presignedUrl || !fileUrl) throw new Error(`presigned URL 응답 필드 없음: ${JSON.stringify(result)}`);
     await uploadFileToS3(presignedUrl, file);
     return fileUrl;
   };
