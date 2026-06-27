@@ -160,7 +160,7 @@ function EditorModal({ initial, onClose, onSubmit }) {
             setForm((prev) => ({ ...prev, message: e.target.value }))
           }
           maxLength={30}
-          placeholder="이 장소에 남기고 싶은 문장을 적어주세요."
+          placeholder="이 장소에 남기고 싶은 문장을 적어주세요. (최대 30자)"
         />
 
         <div className="charCount">{form.message.length}/30</div>
