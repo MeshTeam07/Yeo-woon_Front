@@ -66,3 +66,8 @@ export const likeCapsule = (capsuleId) =>
 
 export const unlikeCapsule = (capsuleId) =>
   client.delete(`/capsules/${capsuleId}/likes`);
+
+export const getSeasonalSongs = ({ latitude, longitude, radius = 500, season, sort = 'count', limit = 10 }) =>
+  client.get('/capsules/nearby/seasonal-songs', {
+    params: { latitude, longitude, radius, season, sort, limit },
+  });

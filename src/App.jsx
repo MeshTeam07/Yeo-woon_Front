@@ -13,13 +13,14 @@ import {
   toRecord,
   likeCapsule,
   unlikeCapsule,
+  getSeasonalSongs,
 } from './api/capsules';
 import { getPresignedUrl, uploadFileToS3 } from './api/uploads';
 import { loadLikes, saveLikes } from './utils/storage';
 import Sidebar from './components/Sidebar';
 import { MapCanvas } from './components/Map';
 import { Panel, SortTabs } from './components/Panel';
-import { RecordList } from './components/Record';
+import { RecordList, SeasonalSongCard } from './components/Record';
 import MyPage from './components/MyPage';
 import { DetailModal, EditorModal } from './components/Modal';
 
@@ -49,6 +50,8 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [page, setPage] = useState('map');
   const [sort, setSort] = useState('distance');
+  const [season, setSeason] = useState(null);
+  const [seasonalRecords, setSeasonalRecords] = useState([]);
   const [records, setRecords] = useState([]);
   const [likes, setLikes] = useState(loadLikes);
   const [position, setPosition] = useState(null);
@@ -101,7 +104,7 @@ function App() {
       setCurrentAddress(addr);
       setNearbyOffset(0);
       try {
-        const apiSort = sort === 'recommend' ? 'recommended' : sort;
+        const apiSort = sort === 'recommend' ? 'recommended' : sort === 'seasonal' ? 'distance' : sort;
         const res = await getNearbyCapsules({
           latitude: lat,
           longitude: lng,
@@ -135,7 +138,7 @@ function App() {
       nearbyLoadingRef.current = false;
       if (!position) return;
       try {
-        const apiSort = sort === 'recommend' ? 'recommended' : sort;
+        const apiSort = sort === 'recommend' ? 'recommended' : sort === 'seasonal' ? 'distance' : sort;
         const res = await getNearbyCapsules({
           latitude: position.lat,
           longitude: position.lng,
@@ -206,6 +209,21 @@ function App() {
   }, [records, sort]);
 
   const myRecords = records.filter((item) => item.owner === 'me');
+
+  // 계절순: season 선택 시 seasonal-songs API 호출
+  useEffect(() => {
+    if (sort !== 'seasonal' || !season || !position) {
+      if (sort !== 'seasonal') setSeasonalRecords([]);
+      return;
+    }
+    getSeasonalSongs({ latitude: position.lat, longitude: position.lng, radius, season })
+      .then((res) => {
+        const seasons = res?.seasons ?? [];
+        const target = seasons.find((s) => s.season === season);
+        setSeasonalRecords(target?.songs ?? []);
+      })
+      .catch(() => setSeasonalRecords([]));
+  }, [sort, season, position, radius]);
 
   // 좋아요 탭에서 API로 로드한 항목 ID를 likes state에 병합
   const handleLikedIdsLoaded = useCallback((ids) => {
@@ -435,17 +453,49 @@ function App() {
           subtitle="주변"
           onClose={() => setPage('map')}
         >
-          <SortTabs value={sort} onChange={setSort} />
-          <div className="countText">
-            반경 {radius}m · 총 {nearbyTotal ?? nearbyRecords.length}개
-          </div>
-          <RecordList
-            records={nearbyRecords}
-            likes={likes}
-            onLike={toggleLike}
-            onSelect={setSelected}
+          <SortTabs
+            value={sort}
+            onChange={(newSort) => {
+              if (newSort !== 'seasonal') setSeason(null);
+              setSort(newSort);
+            }}
+            season={season}
+            onSeasonChange={setSeason}
           />
-          {hasMoreNearby && <Sentinel onVisible={loadMoreNearby} />}
+          {sort === 'seasonal' ? (
+            season ? (
+              <>
+                <div className="countText">
+                  반경 {radius}m · {seasonalRecords.length}개 노래
+                </div>
+                <div className="seasonalSongList">
+                  {seasonalRecords.length === 0 && (
+                    <div className="empty">이 계절에 남겨진 여운이 없어요.</div>
+                  )}
+                  {seasonalRecords.map((entry, i) => (
+                    <SeasonalSongCard key={entry.song?.id ?? i} entry={entry} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="countText" style={{ textAlign: 'center', padding: '24px 0' }}>
+                계절을 선택해주세요
+              </div>
+            )
+          ) : (
+            <>
+              <div className="countText">
+                반경 {radius}m · 총 {nearbyTotal ?? nearbyRecords.length}개
+              </div>
+              <RecordList
+                records={nearbyRecords}
+                likes={likes}
+                onLike={toggleLike}
+                onSelect={setSelected}
+              />
+              {hasMoreNearby && <Sentinel onVisible={loadMoreNearby} />}
+            </>
+          )}
         </Panel>
       )}
 

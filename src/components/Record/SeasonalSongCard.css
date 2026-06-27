@@ -1,0 +1,115 @@
+.seasonalSongList {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 30px;
+}
+
+.seasonalSongCard {
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(189, 182, 216, 0.78);
+  border-radius: 20px;
+  padding: 12px;
+  box-shadow: 0 10px 22px rgba(136, 119, 188, 0.11);
+  align-items: center;
+}
+
+.seasonalAlbumCover {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 14px;
+  background: var(--gray);
+  flex-shrink: 0;
+}
+
+.seasonalCardBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.seasonalSongTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d2f3e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.seasonalSongArtist {
+  font-size: 13px;
+  color: #80859a;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.seasonalSongCount {
+  font-size: 12px;
+  color: var(--lavender-dark);
+  font-weight: 600;
+  margin: 2px 0 6px;
+}
+
+.seasonalPlayBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--lavender-dark);
+  background: rgba(220, 214, 234, 0.5);
+  border: 1.5px solid rgba(136, 119, 188, 0.28);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+
+.seasonalPlayBtn.playing {
+  background: linear-gradient(135deg, var(--lavender-dark), var(--lavender));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(136, 119, 188, 0.35);
+}
+
+.seasonalSongList .empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #888da0;
+  background: white;
+  border-radius: 22px;
+}
+
+/* =========================
+   Mobile
+   ========================= */
+@media (max-width: 640px) {
+  .seasonalSongCard {
+    grid-template-columns: 68px 1fr auto;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .seasonalAlbumCover {
+    width: 68px;
+    height: 68px;
+    border-radius: 12px;
+  }
+
+  .seasonalPlayBtn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .seasonalSongTitle {
+    font-size: 15px;
+  }
+}

@@ -21,6 +21,31 @@
   box-shadow: 0 8px 18px rgba(136, 119, 188, 0.22);
 }
 
+.seasonTabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 2px;
+}
+
+.seasonTabs button {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 999px;
+  color: #666b82;
+  font-weight: 700;
+  font-size: 14px;
+  border: 1.5px solid rgba(136, 119, 188, 0.25);
+  background: rgba(220, 214, 234, 0.35);
+}
+
+.seasonTabs button.selected {
+  background: linear-gradient(135deg, var(--lavender-dark), var(--lavender));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 6px 14px rgba(136, 119, 188, 0.28);
+}
+
 .countText {
   color: #74788d;
   font-size: 14px;
