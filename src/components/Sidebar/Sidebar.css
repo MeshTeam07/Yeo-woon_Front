@@ -363,7 +363,7 @@
 .authButtonDesktop .sidebarAvatar {
   width: 28px;
   height: 28px;
-  flex-shrink: 0;authButtonText
+  flex-shrink: 0;
 }
 
 .authButtonDesktop svg {
